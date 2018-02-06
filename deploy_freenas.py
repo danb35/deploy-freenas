@@ -16,6 +16,7 @@ only be readable by root.
 import sys
 import json
 import requests
+import subprocess
 from datetime import datetime
 
 PRIVATEKEY_PATH = "/root/.acme.sh/your_fqdn/your_fqdn.key"
@@ -91,16 +92,6 @@ else:
   print ("Error setting active certificate!")
   print (r)
   sys.exit(1)
-  
-# Reload nginx with new cert
-r = requests.get(
-  PROTOCOL + DOMAIN_NAME + '/legacy/system/restart-httpd-all/',
-  auth=(USER,PASSWORD))
 
-if r.status_code == 200:
-  print ("Reload web GUI successful")
-else:
-  print ("Error reloading web GUI!")
-  print (r)
-  sys.exit(1) 
-          
+# Reload nginx with new cert
+subprocess.run("service", "nginx", "reload")
