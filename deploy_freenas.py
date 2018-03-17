@@ -94,4 +94,7 @@ else:
   sys.exit(1)
 
 # Reload nginx with new cert
-subprocess.run("service", "nginx", "reload")
+r = requests.post(
+  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/restart-httpd-all/',
+  auth=(USER, PASSWORD),
+)
