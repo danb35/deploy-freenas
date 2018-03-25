@@ -26,7 +26,7 @@ PASSWORD = "ReallySecurePassword"
 DOMAIN_NAME = "your_fqdn"
 PROTOCOL = 'http://'
 now = datetime.now()
-cert = "letsencrypt-%s-%s-%s" %(now.year, now.month, now.day) # TODO: force two digits for month and day
+cert = "letsencrypt-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'))
 
 # Load cert/key
 with open(PRIVATEKEY_PATH, 'r') as file:
