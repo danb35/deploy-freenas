@@ -51,7 +51,7 @@ if r.status_code == 201:
 else:
   print ("Error importing certificate!")
   print (r)
-  sys.exit(1)  
+  sys.exit(1)
 
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
@@ -66,7 +66,7 @@ else:
   print ("Error listing certificates!")
   print (r)
   sys.exit(1)
-  
+
 # Parse certificate list to find the id that matches our cert name
 cert_list = r.json()
 
@@ -84,7 +84,7 @@ r = requests.put(
   data=json.dumps({
   "stg_guicertificate": cert_id,
   }),
-)  
+)
 
 if r.status_code == 200:
   print ("Setting active certificate successful")
@@ -94,7 +94,10 @@ else:
   sys.exit(1)
 
 # Reload nginx with new cert
-r = requests.post(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/restart-httpd-all/',
-  auth=(USER, PASSWORD),
-)
+try:
+  r = requests.post(
+    PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/restart-httpd-all/',
+    auth=(USER, PASSWORD),
+  )
+except requests.exceptions.ConnectionError:
+  pass # This is expected when restarting the web server
