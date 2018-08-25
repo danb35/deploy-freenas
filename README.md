@@ -4,12 +4,36 @@ deploy-freenas.py is a Python script to deploy TLS certificates to a FreeNAS ser
 
 # Usage
 
-There are no command-line arguments to deploy-freenas.py; the relevant configuration needs to be made in the script itself.  The required changes are mostly self-explanatory, but are as follows:
-* PRIVATEKEY_PATH is the path to your TLS private key
-* FULLCHAIN_PATH is the path to concatenation of your certificate and the issuer's certificate.  With most ACME clients, this file is saved as fullchain.pem or fullchain.cer.
-* USER should always be "root"
-* PASSWORD needs to be the root password for your FreeNAS server
-* DOMAIN_NAME is the FQDN of your FreeNAS server
-* PROTOCOL is the protocol used to connect to the API.  If your FreeNAS server is configured to use HTTPS with a trusted certificate, it can be set to "https://".  Otherwise, set it to "http://".
+```
+usage: deploy_freenas.py [-h] [-u USERNAME] [-p PORT]
+                         cert key password {http,https} domain
+
+positional arguments:
+  cert                  Path to your certificate.
+  key                   Path to your private key.
+  password              Login password.
+  {http,https}          Protocol for request.
+  domain                IP or domain to connect to the web interface.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u USERNAME, --username USERNAME
+                        Login username, default root.
+  -p PORT, --port PORT  Port to access the webinterface, default none.
+```
+
+Usage should be self explanatory, here are some examples.
+
+* Update the certificate from the local FreeNAS box.
+
+`./deploy_freenas.py cert.pem key.pem 'foo' http localhost`
+
+* Update the certificate using https and a fqdn.
+
+`./deploy_freenas.py cert.pem key.pem 'foo' https nas.example.com`
+
+* Update the certificate with a custom port.
+
+`./deploy_freenas.py cert.pem key.pem 'foo' http localhost -p 8080`
 
 
