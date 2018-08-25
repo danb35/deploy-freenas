@@ -15,31 +15,42 @@ only be readable by root.
 Source: https://github.com/danb35/deploy-freenas
 """
 
+import argparse
 import sys
 import json
 import requests
 import subprocess
 from datetime import datetime
 
-PRIVATEKEY_PATH = "/root/.acme.sh/your_fqdn/your_fqdn.key"
-FULLCHAIN_PATH = "/root/.acme.sh/your_fqdn/fullchain.cer"
-USER = "root"
-PASSWORD = "ReallySecurePassword"
-DOMAIN_NAME = "your_fqdn"
-PROTOCOL = 'http://'
+parser = argparse.ArgumentParser()
+parser.add_argument('cert', help='Path to your certificate.')
+parser.add_argument('key', help='Path to your private key.')
+parser.add_argument('password', help='Login password.')
+parser.add_argument('protocol', choices=['http', 'https'], help='Protocol for request.')
+parser.add_argument('domain', help='IP or domain to connect to the web interface.')
+parser.add_argument('-u', '--username', default='root', help='Login username, default root.')
+parser.add_argument('-p', '--port', type=int, help='Port to access the webinterface, default none.')
+args = parser.parse_args()
+
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'))
 
+# Set url
+if not args.port:
+    url = args.protocol + '://' +  args.domain
+else:
+    url = args.protocol + '://' +  args.domain + ':' + str(args.port)
+
 # Load cert/key
-with open(PRIVATEKEY_PATH, 'r') as file:
+with open(args.key, 'r') as file:
   priv_key = file.read()
-with open(FULLCHAIN_PATH, 'r') as file:
+with open(args.cert, 'r') as file:
   full_chain = file.read()
 
-# Update or create certificate
+# Update or create certificatr = requests.post(
 r = requests.post(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/certificate/import/',
-  auth=(USER, PASSWORD),
+  url + '/api/v1.0/system/certificate/import/',
+  auth=(args.username, args.password),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
   "cert_name": cert,
@@ -58,9 +69,9 @@ else:
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = requests.get(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/certificate/',
+  url + '/api/v1.0/system/certificate/',
   params=limit,
-  auth=(USER, PASSWORD))
+  auth=(args.username, args.password))
 
 if r.status_code == 200:
   print ("Certificate list successful")
@@ -80,8 +91,8 @@ for index in range(100):
 
 # Set our cert as active
 r = requests.put(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/',
-  auth=(USER, PASSWORD),
+  url + '/api/v1.0/system/settings/',
+  auth=(args.username, args.password),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
   "stg_guicertificate": cert_id,
@@ -98,8 +109,8 @@ else:
 # Reload nginx with new cert
 try:
   r = requests.post(
-    PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/restart-httpd-all/',
-    auth=(USER, PASSWORD),
+    url + '/api/v1.0/system/settings/restart-httpd-all/',
+    auth=(args.username, args.password),
   )
 except requests.exceptions.ConnectionError:
   pass # This is expected when restarting the web server
