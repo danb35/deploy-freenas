@@ -27,6 +27,8 @@ DOMAIN_NAME = "your_fqdn"
 PASSWORD = "ReallySecurePassword"
 
 USER = "root"
+FREENAS_ADDRESS = "localhost"
+VERIFY = False # Or True (Caution! False disables certificate checking)
 PRIVATEKEY_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key"
 FULLCHAIN_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer"
 PROTOCOL = 'http://'
@@ -43,8 +45,8 @@ with open(FULLCHAIN_PATH, 'r') as file:
 
 # Update or create certificate
 r = requests.post(
-  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/certificate/import/',
-  verify=False,
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/import/',
+  verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
@@ -64,8 +66,8 @@ else:
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = requests.get(
-  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/certificate/',
-  verify=False,
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/',
+  verify=VERIFY,
   params=limit,
   auth=(USER, PASSWORD))
 
@@ -87,8 +89,8 @@ for index in range(100):
 
 # Set our cert as active
 r = requests.put(
-  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/settings/',
-  verify=False,
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/',
+  verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
@@ -106,8 +108,8 @@ else:
 # Reload nginx with new cert
 try:
   r = requests.post(
-    PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
-    verify=False,
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
+    verify=VERIFY,
     auth=(USER, PASSWORD),
   )
 except requests.exceptions.ConnectionError:
