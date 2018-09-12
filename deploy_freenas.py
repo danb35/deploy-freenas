@@ -20,15 +20,20 @@ import json
 import requests
 import subprocess
 from datetime import datetime
+from urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-PRIVATEKEY_PATH = "/root/.acme.sh/your_fqdn/your_fqdn.key"
-FULLCHAIN_PATH = "/root/.acme.sh/your_fqdn/fullchain.cer"
-USER = "root"
-PASSWORD = "ReallySecurePassword"
 DOMAIN_NAME = "your_fqdn"
+PASSWORD = "ReallySecurePassword"
+
+USER = "root"
+PRIVATEKEY_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key"
+FULLCHAIN_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer"
 PROTOCOL = 'http://'
+PORT = '80'
 now = datetime.now()
-cert = "letsencrypt-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'))
+cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
+c.isdigit()))
 
 # Load cert/key
 with open(PRIVATEKEY_PATH, 'r') as file:
@@ -38,7 +43,8 @@ with open(FULLCHAIN_PATH, 'r') as file:
 
 # Update or create certificate
 r = requests.post(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/certificate/import/',
+  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/certificate/import/',
+  verify=False,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
@@ -58,7 +64,8 @@ else:
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = requests.get(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/certificate/',
+  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/certificate/',
+  verify=False,
   params=limit,
   auth=(USER, PASSWORD))
 
@@ -80,7 +87,8 @@ for index in range(100):
 
 # Set our cert as active
 r = requests.put(
-  PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/',
+  PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/settings/',
+  verify=False,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
@@ -98,7 +106,8 @@ else:
 # Reload nginx with new cert
 try:
   r = requests.post(
-    PROTOCOL + DOMAIN_NAME + '/api/v1.0/system/settings/restart-httpd-all/',
+    PROTOCOL + 'localhost:' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
+    verify=False,
     auth=(USER, PASSWORD),
   )
 except requests.exceptions.ConnectionError:
