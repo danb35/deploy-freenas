@@ -1,7 +1,9 @@
 # Configuration file for deploy_freenas.py
 
 [deploy]
-password = YourSuperSecurePassword#@#$* ;this is the only mandatory value
+# This is the only line that is mandatory
+# Set it to your FreeNAS root password
+password = YourSuperSecurePassword#@#$*
 
 # Everything below here is optional
 
