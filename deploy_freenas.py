@@ -19,20 +19,26 @@ import sys
 import json
 import requests
 import subprocess
+import configparser
+import socket
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-DOMAIN_NAME = "your_fqdn"
-PASSWORD = "ReallySecurePassword"
+config = configparser.ConfigParser()
+config.read('deploy_config')
+deploy = config['deploy']
 
 USER = "root"
-FREENAS_ADDRESS = "localhost"
-VERIFY = False # Or True (Caution! False disables certificate checking)
-PRIVATEKEY_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key"
-FULLCHAIN_PATH = "/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer"
-PROTOCOL = 'http://'
-PORT = '80'
+PASSWORD = deploy.get('password')
+
+DOMAIN_NAME = deploy.get('cert_fqdn',socket.gethostname())
+FREENAS_ADDRESS = deploy.get('connect_host','localhost')
+VERIFY = deploy.getboolean('verify',fallback=False)
+PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key")
+FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
+PROTOCOL = deploy.get('protocol','http://')
+PORT = deploy.get('port','80')
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))

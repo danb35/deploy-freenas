@@ -1,0 +1,38 @@
+# Configuration file for deploy_freenas.py
+
+[deploy]
+# This is the only line that is mandatory
+# Set it to your FreeNAS root password
+password = YourSuperSecurePassword#@#$*
+
+# Everything below here is optional
+
+# cert_fqdn specifies the FQDN used for your certificate.  Default is your system hostname
+# cert_fqdn = foo.bar.baz
+
+# connect_host specifies the hostname the script should attempt to connect to, to deploy the cert. 
+# Default is localhost (assuming the script is running on your FreeNAS box)
+# connect_host = baz.bar.foo
+
+# verify sets whether the script will attempt to verify the server's certificate with a HTTPS
+# connection.  Set to true if you're using a HTTPS connection to a remote host.  If connect_host
+# is set to localhost (or is unset), set to false.  Default is false.
+# verify = false
+
+# privkey_path is the path to the certificate private key on your system.  Default
+# assumes you're using acme.sh:
+# /root/.acme.sh/cert_fqdn/cert_fqdn.key
+# privkey_path = /some/other/path
+
+# fullchain_path is the path to the full chain (leaf cert + intermediate certs)
+# on your system.  Default assumes you're using acme.sh:
+# /root/.acme.sh/cert_fqdn/fullchain.cer
+# fullchain_path = /some/other/other/path
+
+# protocol sets the connection protocol, http or https.  Include '://' at the end.
+# Default is http
+# protocol = https://
+
+# port sets the port to use to connect.  Default is 80.  If protocol is https,
+# this MUST be set to your https port.
+# port = 443
