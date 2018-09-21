@@ -28,7 +28,8 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into FreeNAS.')
-parser.add_argument('-c', '--config', default='deploy_config', help='Path to config file, defaults to deploy_config.')
+parser.add_argument('-c', '--config', default=(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    'deploy_config')), help='Path to config file, defaults to deploy_config.')
 args = parser.parse_args()
 
 if os.path.isfile(args.config):
