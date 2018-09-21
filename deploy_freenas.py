@@ -15,6 +15,8 @@ only be readable by root.
 Source: https://github.com/danb35/deploy-freenas
 """
 
+import argparse
+import os
 import sys
 import json
 import requests
@@ -25,9 +27,17 @@ from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-config = configparser.ConfigParser()
-config.read('deploy_config')
-deploy = config['deploy']
+parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into FreeNAS.')
+parser.add_argument('-c', '--config', default='deploy_config', help='Path to config file, defaults to deploy_config.')
+args = parser.parse_args()
+
+if os.path.isfile(args.config):
+    config = configparser.ConfigParser()
+    config.read(args.config)
+    deploy = config['deploy']
+else:
+    print("Config file", args.config, "does not exist!")
+    exit(1)
 
 USER = "root"
 PASSWORD = deploy.get('password')
