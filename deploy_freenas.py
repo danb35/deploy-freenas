@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 
 """
 Import and activate a SSL/TLS certificate into FreeNAS 11.1 or later
