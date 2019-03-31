@@ -131,3 +131,21 @@ try:
   )
 except requests.exceptions.ConnectionError:
   pass # This is expected when restarting the web server
+
+# Set our cert as active for FTP plugin
+r = requests.put(
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
+  verify=VERIFY,
+  auth=(USER, PASSWORD),
+  headers={'Content-Type': 'application/json'},
+  data=json.dumps({
+  "ftp_ssltls_certfile": cert,
+  }),
+)
+
+if r.status_code == 200:
+  print ("Setting active certificate successful")
+else:
+  print ("Error setting active certificate!")
+  print (r)
+  sys.exit(1)
