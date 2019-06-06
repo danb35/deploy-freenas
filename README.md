@@ -19,6 +19,7 @@ privkey_path = /some/other/path
 fullchain_path = /some/other/other/path
 protocol = https://
 port = 443
+ftp_enabled = false
 ```
 
 Everything but the password is optional, and the defaults are documented in `depoy_config.example`.
