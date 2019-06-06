@@ -122,16 +122,6 @@ else:
   print (r)
   sys.exit(1)
 
-# Reload nginx with new cert
-try:
-  r = requests.post(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
-    verify=VERIFY,
-    auth=(USER, PASSWORD),
-  )
-except requests.exceptions.ConnectionError:
-  pass # This is expected when restarting the web server
-
 # Set our cert as active for FTP plugin
 r = requests.put(
   PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
@@ -149,3 +139,13 @@ else:
   print ("Error setting active certificate!")
   print (r)
   sys.exit(1)
+
+# Reload nginx with new cert
+try:
+  r = requests.post(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
+    verify=VERIFY,
+    auth=(USER, PASSWORD),
+  )
+except requests.exceptions.ConnectionError:
+  pass # This is expected when restarting the web server
