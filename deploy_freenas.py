@@ -50,6 +50,7 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
+FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
@@ -122,23 +123,24 @@ else:
   print (r)
   sys.exit(1)
 
-# Set our cert as active for FTP plugin
-r = requests.put(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
-  verify=VERIFY,
-  auth=(USER, PASSWORD),
-  headers={'Content-Type': 'application/json'},
-  data=json.dumps({
-  "ftp_ssltls_certfile": cert,
-  }),
-)
+if FTP_ENABLED:
+  # Set our cert as active for FTP plugin
+  r = requests.put(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
+    verify=VERIFY,
+    auth=(USER, PASSWORD),
+    headers={'Content-Type': 'application/json'},
+    data=json.dumps({
+    "ftp_ssltls_certfile": cert,
+    }),
+  )
 
-if r.status_code == 200:
-  print ("Setting active certificate successful")
-else:
-  print ("Error setting active certificate!")
-  print (r)
-  sys.exit(1)
+  if r.status_code == 200:
+    print ("Setting active FTP certificate successful")
+  else:
+    print ("Error setting active FTP certificate!")
+    print (r)
+    sys.exit(1)
 
 # Reload nginx with new cert
 try:
