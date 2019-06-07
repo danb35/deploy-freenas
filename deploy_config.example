@@ -36,3 +36,6 @@ password = YourSuperSecurePassword#@#$*
 # port sets the port to use to connect.  Default is 80.  If protocol is https,
 # this MUST be set to your https port.
 # port = 443
+
+# set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
+# ftp_enabled = true
