@@ -20,10 +20,9 @@ import os
 import sys
 import json
 import requests
-import subprocess
 import configparser
 import socket
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -99,11 +98,47 @@ else:
 # Parse certificate list to find the id that matches our cert name
 cert_list = r.json()
 
-for index in range(100):
-  cert_data = cert_list[index]
+for cert_data in cert_list:
   if cert_data['cert_name'] == cert:
+    new_cert_data = cert_data
     cert_id = cert_data['id']
     break
+
+# Get expired and old certs with same SAN
+cert_ids_same_san = set()
+cert_ids_expired = set()
+for cert_data in cert_list:
+  if set(cert_data['cert_san']) == set(new_cert_data['cert_san']):
+      cert_ids_same_san.add(cert_data['id'])
+
+  issued_date = datetime.strptime(cert_data['cert_from'], "%c")
+  lifetime = timedelta(days=cert_data['cert_lifetime'])
+  expiration_date = issued_date + lifetime
+  if expiration_date < now:
+      cert_ids_expired.add(cert_data['id'])
+
+# Remove new cert_id from lists
+if cert_id in cert_ids_expired:
+  cert_ids_expired.remove(cert_id)
+
+if cert_id in cert_ids_same_san:
+  cert_ids_same_san.remove(cert_id)
+
+# Delete expired and old certificates with same SAN from freenas
+for cid in (cert_ids_same_san | cert_ids_expired):
+  r = requests.delete(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/' + cid,
+    verify=VERIFY,
+    auth=(USER, PASSWORD),
+    headers={'Content-Type': 'application/json'},
+  )
+
+  if r.status_code == 204:
+    print ("Deleting certificate " + str(cid) + " successful")
+  else:
+    print ("Error deleting certificate " + str(cid) + "!")
+    print (r)
+    sys.exit(1)
 
 # Set our cert as active
 r = requests.put(
