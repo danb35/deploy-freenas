@@ -127,7 +127,7 @@ if cert_id in cert_ids_same_san:
 # Delete expired and old certificates with same SAN from freenas
 for cid in (cert_ids_same_san | cert_ids_expired):
   r = requests.delete(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/' + cid,
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/' + str(cid),
     verify=VERIFY,
     auth=(USER, PASSWORD),
     headers={'Content-Type': 'application/json'},
