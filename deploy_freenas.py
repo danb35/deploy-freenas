@@ -21,6 +21,7 @@ import sys
 import json
 import requests
 import subprocess
+import time
 import configparser
 import socket
 from datetime import datetime
@@ -63,28 +64,32 @@ with open(FULLCHAIN_PATH, 'r') as file:
 
 # Update or create certificate
 r = requests.post(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/import/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "cert_name": cert,
-  "cert_certificate": full_chain,
-  "cert_privatekey": priv_key,
+  "create_type": "CERTIFICATE_CREATE_IMPORTED",
+  "name": cert,
+  "certificate": full_chain,
+  "privatekey": priv_key,
   }),
 )
 
-if r.status_code == 201:
+if r.status_code == 200:
   print ("Certificate import successful")
 else:
   print ("Error importing certificate!")
   print (r)
   sys.exit(1)
 
+#sleep for a few seconds to let the cert propogate
+time.sleep(5)
+
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = requests.get(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
   params=limit,
   auth=(USER, PASSWORD))
@@ -98,21 +103,25 @@ else:
 
 # Parse certificate list to find the id that matches our cert name
 cert_list = r.json()
-
-for index in range(100):
+cert_id = ""
+for index in range(len(cert_list)):
   cert_data = cert_list[index]
-  if cert_data['cert_name'] == cert:
+  if cert_data['name'] == cert:
     cert_id = cert_data['id']
     break
 
+if cert_id == "":
+  print ("Certificate not found with name " + cert)
+  sys.exit(1)
+
 # Set our cert as active
 r = requests.put(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
   verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "stg_guicertificate": cert_id,
+  "ui_certificate": cert_id,
   }),
 )
 
@@ -126,12 +135,12 @@ else:
 if FTP_ENABLED:
   # Set our cert as active for FTP plugin
   r = requests.put(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
     verify=VERIFY,
     auth=(USER, PASSWORD),
     headers={'Content-Type': 'application/json'},
     data=json.dumps({
-    "ftp_ssltls_certfile": cert,
+    "ssltls_certfile": cert,
     }),
   )
 
@@ -145,7 +154,7 @@ if FTP_ENABLED:
 # Reload nginx with new cert
 try:
   r = requests.post(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
     verify=VERIFY,
     auth=(USER, PASSWORD),
   )
