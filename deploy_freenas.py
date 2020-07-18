@@ -20,6 +20,7 @@ import os
 import sys
 import json
 import requests
+import time
 import configparser
 import socket
 from datetime import datetime, timedelta
@@ -62,28 +63,32 @@ with open(FULLCHAIN_PATH, 'r') as file:
 
 # Update or create certificate
 r = requests.post(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/import/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "cert_name": cert,
-  "cert_certificate": full_chain,
-  "cert_privatekey": priv_key,
+  "create_type": "CERTIFICATE_CREATE_IMPORTED",
+  "name": cert,
+  "certificate": full_chain,
+  "privatekey": priv_key,
   }),
 )
 
-if r.status_code == 201:
+if r.status_code == 200:
   print ("Certificate import successful")
 else:
   print ("Error importing certificate!")
   print (r)
   sys.exit(1)
 
+# Sleep for a few seconds to let the cert propagate
+time.sleep(5)
+
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = requests.get(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
   params=limit,
   auth=(USER, PASSWORD))
@@ -98,20 +103,25 @@ else:
 # Parse certificate list to find the id that matches our cert name
 cert_list = r.json()
 
+new_cert_data = None
 for cert_data in cert_list:
-  if cert_data['cert_name'] == cert:
+  if cert_data['name'] == cert:
     new_cert_data = cert_data
-    cert_id = cert_data['id']
+    cert_id = new_cert_data['id']
     break
+
+if not new_cert_data:
+  print ("Error searching for newly imported certificate in certificate list.")
+  sys.exit(1)
 
 # Set our cert as active
 r = requests.put(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/',
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
   verify=VERIFY,
   auth=(USER, PASSWORD),
   headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "stg_guicertificate": cert_id,
+  "ui_certificate": cert_id,
   }),
 )
 
@@ -125,12 +135,12 @@ else:
 if FTP_ENABLED:
   # Set our cert as active for FTP plugin
   r = requests.put(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/services/ftp/',
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
     verify=VERIFY,
     auth=(USER, PASSWORD),
     headers={'Content-Type': 'application/json'},
     data=json.dumps({
-    "ftp_ssltls_certfile": cert,
+    "ssltls_certfile": cert,
     }),
   )
 
@@ -145,11 +155,11 @@ if FTP_ENABLED:
 cert_ids_same_san = set()
 cert_ids_expired = set()
 for cert_data in cert_list:
-  if set(cert_data['cert_san']) == set(new_cert_data['cert_san']):
+  if set(cert_data['san']) == set(new_cert_data['san']):
       cert_ids_same_san.add(cert_data['id'])
 
-  issued_date = datetime.strptime(cert_data['cert_from'], "%c")
-  lifetime = timedelta(days=cert_data['cert_lifetime'])
+  issued_date = datetime.strptime(cert_data['from'], "%c")
+  lifetime = timedelta(days=cert_data['lifetime'])
   expiration_date = issued_date + lifetime
   if expiration_date < now:
       cert_ids_expired.add(cert_data['id'])
@@ -164,7 +174,7 @@ if cert_id in cert_ids_same_san:
 # Delete expired and old certificates with same SAN from freenas
 for cid in (cert_ids_same_san | cert_ids_expired):
   r = requests.delete(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/certificate/' + str(cid),
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/id/' + str(cid),
     verify=VERIFY,
     auth=(USER, PASSWORD),
     headers={'Content-Type': 'application/json'},
@@ -172,9 +182,9 @@ for cid in (cert_ids_same_san | cert_ids_expired):
 
   for c in cert_list:
     if c['id'] == cid:
-      cert_name = c['cert_name']
+      cert_name = c['name']
 
-  if r.status_code == 204:
+  if r.status_code == 200:
     print ("Deleting certificate " + cert_name + " successful")
   else:
     print ("Error deleting certificate " + cert_name + "!")
@@ -184,7 +194,7 @@ for cid in (cert_ids_same_san | cert_ids_expired):
 # Reload nginx with new cert
 try:
   r = requests.post(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v1.0/system/settings/restart-httpd-all/',
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
     verify=VERIFY,
     auth=(USER, PASSWORD),
   )
