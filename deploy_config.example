@@ -1,10 +1,10 @@
 # Configuration file for deploy_freenas.py
 
 [deploy]
-# Choose one of the following authentication methods.
-# Auth via API keys is highly recommended, but can only be used in TrueNAS 12.0+.
+# Choose one of the following authentication methods, "api_key" or "password" (comment out the other one).
+# Auth via API keys is highly recommended, but is only available from TrueNAS (Core) 12.0 up.
 # You can generate a new API key in the web interface under "Settings" (upper right) > "API Keys".
-api_key = YourNewlyGeneratedAPIKey#@#$*
+# api_key = YourNewlyGeneratedAPIKey#@#$*
 # If you are on FreeNAS 11 or lower, set this to your FreeNAS root password
 password = YourSuperSecurePassword#@#$*
 
