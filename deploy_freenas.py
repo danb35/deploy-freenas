@@ -40,6 +40,9 @@ else:
     print("Config file", args.config, "does not exist!")
     exit(1)
 
+# We'll use the API key if provided
+API_KEY = deploy.get('api_key')
+# Otherwise fallback to basic password authentication
 USER = "root"
 PASSWORD = deploy.get('password')
 
@@ -55,6 +58,22 @@ now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
 
+
+# Set some general request params
+session = requests.Session()
+session.headers.update({
+  'Content-Type': 'application/json'
+})
+if API_KEY:
+  session.headers.update({
+    'Authorization': f'Bearer {API_KEY}'
+  })
+elif PASSWORD:
+  session.auth = (USER, PASSWORD)
+else:
+  print ("Unable to authenticate. Specify 'api_key' or 'password' in the config.")
+  exit(1)
+
 # Load cert/key
 with open(PRIVATEKEY_PATH, 'r') as file:
   priv_key = file.read()
@@ -62,17 +81,15 @@ with open(FULLCHAIN_PATH, 'r') as file:
   full_chain = file.read()
 
 # Update or create certificate
-r = requests.post(
+r = session.post(
   PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
-  auth=(USER, PASSWORD),
-  headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "create_type": "CERTIFICATE_CREATE_IMPORTED",
-  "name": cert,
-  "certificate": full_chain,
-  "privatekey": priv_key,
-  }),
+    "create_type": "CERTIFICATE_CREATE_IMPORTED",
+    "name": cert,
+    "certificate": full_chain,
+    "privatekey": priv_key,
+  })
 )
 
 if r.status_code == 200:
@@ -87,11 +104,11 @@ time.sleep(5)
 
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
-r = requests.get(
+r = session.get(
   PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
   verify=VERIFY,
-  params=limit,
-  auth=(USER, PASSWORD))
+  params=limit
+)
 
 if r.status_code == 200:
   print ("Certificate list successful")
@@ -115,14 +132,12 @@ if not new_cert_data:
   sys.exit(1)
 
 # Set our cert as active
-r = requests.put(
+r = session.put(
   PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
   verify=VERIFY,
-  auth=(USER, PASSWORD),
-  headers={'Content-Type': 'application/json'},
   data=json.dumps({
-  "ui_certificate": cert_id,
-  }),
+    "ui_certificate": cert_id,
+  })
 )
 
 if r.status_code == 200:
@@ -134,13 +149,11 @@ else:
 
 if FTP_ENABLED:
   # Set our cert as active for FTP plugin
-  r = requests.put(
+  r = session.put(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
     verify=VERIFY,
-    auth=(USER, PASSWORD),
-    headers={'Content-Type': 'application/json'},
     data=json.dumps({
-    "ssltls_certfile": cert,
+      "ssltls_certfile": cert,
     }),
   )
 
@@ -173,11 +186,9 @@ if cert_id in cert_ids_same_san:
 
 # Delete expired and old certificates with same SAN from freenas
 for cid in (cert_ids_same_san | cert_ids_expired):
-  r = requests.delete(
+  r = session.delete(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/id/' + str(cid),
-    verify=VERIFY,
-    auth=(USER, PASSWORD),
-    headers={'Content-Type': 'application/json'},
+    verify=VERIFY
   )
 
   for c in cert_list:
@@ -193,10 +204,9 @@ for cid in (cert_ids_same_san | cert_ids_expired):
 
 # Reload nginx with new cert
 try:
-  r = requests.post(
+  r = session.post(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
-    verify=VERIFY,
-    auth=(USER, PASSWORD),
+    verify=VERIFY
   )
 except requests.exceptions.ConnectionError:
   pass # This is expected when restarting the web server
