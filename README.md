@@ -1,9 +1,9 @@
 # deploy-freenas
 
-deploy-freenas.py is a Python script to deploy TLS certificates to a FreeNAS server using the FreeNAS API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  It's intended to be called from a Let's Encrypt client like [acme.sh](https://github.com/Neilpang/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.
+deploy-freenas.py is a Python script to deploy TLS certificates to a FreeNAS/TrueNAS (Core) server using the FreeNAS/TrueNAS API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  It's intended to be called from a Let's Encrypt client like [acme.sh](https://github.com/Neilpang/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.
 
 # Installation
-This script can run on any machine running Python 3 that has network access to your FreeNAS server, but in most cases it's best to run it directly on the FreeNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.
+This script can run on any machine running Python 3 that has network access to your FreeNAS/TrueNAS server, but in most cases it's best to run it directly on the FreeNAS/TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.
 
 # Usage
 
@@ -22,7 +22,13 @@ port = 443
 ftp_enabled = false
 ```
 
-Everything but the password is optional, and the defaults are documented in `depoy_config.example`.
+Everything but `password` (or `api_key`) is optional, and the defaults are documented in `depoy_config.example`.
+
+On TrueNAS (Core) 12.0 and up you should use API key authentication instead of password authentication.
+[Generate a new API token in the UI](https://www.truenas.com/docs/hub/additional-topics/api/#creating-api-keys) first, then add it as `api_key` to the config, which replaces the `password` field:
+```
+api_key = 1-DXcZ19sZoZFdGATIidJ8vMP6dxk3nHWz3XX876oxS7FospAGMQjkOft0h4itJDSP
+```
 
 Once you've prepared `deploy_config`, you can run `deploy_freenas.py`.  The intended use is that it would be called by your ACME client after issuing a certificate.  With acme.sh, for example, you'd add `--deploy-hook "/path/to/deploy_freenas.py"` to your command.
 
