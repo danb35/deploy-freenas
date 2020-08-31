@@ -42,3 +42,6 @@ password = YourSuperSecurePassword#@#$*
 
 # set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
 # ftp_enabled = true
+
+# set s3_enabled to true if you have the S3 service enabled on your FreeNAS. Default is false.
+# s3_enabled = true

@@ -54,6 +54,7 @@ FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
+S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
@@ -164,6 +165,23 @@ if FTP_ENABLED:
     print (r)
     sys.exit(1)
 
+if S3_ENABLED:
+  # Set our cert as active for S3 plugin
+  r = session.put(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/s3/',
+    verify=VERIFY,
+    data=json.dumps({
+      "certificate": cert_id,
+    }),
+  )
+
+  if r.status_code == 200:
+    print ("Setting active S3 certificate successful")
+  else:
+    print ("Error setting active S3 certificate!")
+    print (r)
+    sys.exit(1)
+
 # Get expired and old certs with same SAN
 cert_ids_same_san = set()
 cert_ids_expired = set()
@@ -210,3 +228,4 @@ try:
   )
 except requests.exceptions.ConnectionError:
   pass # This is expected when restarting the web server
+
