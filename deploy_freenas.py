@@ -54,6 +54,7 @@ FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
+WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
@@ -161,6 +162,23 @@ if FTP_ENABLED:
     print ("Setting active FTP certificate successful")
   else:
     print ("Error setting active FTP certificate!")
+    print (r)
+    sys.exit(1)
+
+if WEBDAV_ENABLED:
+  # Set our cert as active for WEBDAV plugin
+  r = session.put(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/webdav/',
+    verify=VERIFY,
+    data=json.dumps({
+      "certssl": cert,
+    }),
+  )
+
+  if r.status_code == 200:
+    print ("Setting active WEBDAV certificate successful")
+  else:
+    print ("Error setting active WEBDAV certificate!")
     print (r)
     sys.exit(1)
 
