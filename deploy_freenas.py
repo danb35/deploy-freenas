@@ -171,7 +171,7 @@ if WEBDAV_ENABLED:
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/webdav/',
     verify=VERIFY,
     data=json.dumps({
-      "certssl": cert,
+      "certssl": cert_id,
     }),
   )
 
