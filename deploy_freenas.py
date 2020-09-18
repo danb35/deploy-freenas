@@ -96,7 +96,7 @@ if r.status_code == 200:
   print ("Certificate import successful")
 else:
   print ("Error importing certificate!")
-  print (r)
+  print (r.text)
   sys.exit(1)
 
 # Sleep for a few seconds to let the cert propagate
@@ -114,7 +114,7 @@ if r.status_code == 200:
   print ("Certificate list successful")
 else:
   print ("Error listing certificates!")
-  print (r)
+  print (r.text)
   sys.exit(1)
 
 # Parse certificate list to find the id that matches our cert name
@@ -144,7 +144,7 @@ if r.status_code == 200:
   print ("Setting active certificate successful")
 else:
   print ("Error setting active certificate!")
-  print (r)
+  print (r.text)
   sys.exit(1)
 
 if FTP_ENABLED:
@@ -161,7 +161,7 @@ if FTP_ENABLED:
     print ("Setting active FTP certificate successful")
   else:
     print ("Error setting active FTP certificate!")
-    print (r)
+    print (r.text)
     sys.exit(1)
 
 # Get expired and old certs with same SAN
@@ -199,14 +199,20 @@ for cid in (cert_ids_same_san | cert_ids_expired):
     print ("Deleting certificate " + cert_name + " successful")
   else:
     print ("Error deleting certificate " + cert_name + "!")
-    print (r)
+    print (r.text)
     sys.exit(1)
 
 # Reload nginx with new cert
+# If everything goes right, the request fails with a ConnectionError
 try:
-  r = session.post(
+  r = session.get(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
     verify=VERIFY
   )
+  # If we've arrived here, something went wrong
+  print ("Error reloading WebUI!")
+  print (r.text)
+  sys.exit(1)
 except requests.exceptions.ConnectionError:
-  pass # This is expected when restarting the web server
+  print ("Reloading WebUI successful")
+  print ("deploy_freenas.py executed successfully")
