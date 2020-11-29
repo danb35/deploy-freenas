@@ -153,7 +153,7 @@ if FTP_ENABLED:
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
     verify=VERIFY,
     data=json.dumps({
-      "ssltls_certfile": cert,
+      "ssltls_certificate": cert_id,
     }),
   )
 
