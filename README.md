@@ -20,6 +20,7 @@ fullchain_path = /some/other/other/path
 protocol = https://
 port = 443
 ftp_enabled = false
+webdav_enabled = false
 ```
 
 Everything but `password` (or `api_key`) is optional, and the defaults are documented in `depoy_config.example`.

@@ -42,3 +42,6 @@ password = YourSuperSecurePassword#@#$*
 
 # set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
 # ftp_enabled = true
+
+# set webdav_enabled to true if you have the WEBDAV service enabled on your FreeNAS. Default is false.
+# webdav_enabled = true
