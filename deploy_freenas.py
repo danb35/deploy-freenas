@@ -53,8 +53,9 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
-FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
-WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
+UPDATE_UI = deploy.getboolean('update_ui',fallback=False)
+UPDATE_FTP = deploy.getboolean('update_ftp',fallback=False)
+UPDATE_WEBDAV = deploy.getboolean('update_webdav',fallback=False)
 now = datetime.now()
 cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
@@ -132,23 +133,24 @@ if not new_cert_data:
   print ("Error searching for newly imported certificate in certificate list.")
   sys.exit(1)
 
-# Set our cert as active
-r = session.put(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
-  verify=VERIFY,
-  data=json.dumps({
-    "ui_certificate": cert_id,
-  })
-)
+if UPDATE_UI:
+  # Set our cert as active for UI
+  r = session.put(
+    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
+    verify=VERIFY,
+    data=json.dumps({
+      "ui_certificate": cert_id,
+    })
+  )
 
-if r.status_code == 200:
-  print ("Setting active certificate successful")
-else:
-  print ("Error setting active certificate!")
-  print (r.text)
-  sys.exit(1)
+  if r.status_code == 200:
+    print ("Setting active UI certificate successful")
+  else:
+    print ("Error setting active UI certificate!")
+    print (r.text)
+    sys.exit(1)
 
-if FTP_ENABLED:
+if UPDATE_FTP:
   # Set our cert as active for FTP plugin
   r = session.put(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
@@ -165,7 +167,7 @@ if FTP_ENABLED:
     print (r.text)
     sys.exit(1)
 
-if WEBDAV_ENABLED:
+if UPDATE_WEBDAV:
   # Set our cert as active for WEBDAV plugin
   r = session.put(
     PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/webdav/',

@@ -40,8 +40,11 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
-# set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
-# ftp_enabled = true
+# set update_ui to true if you want to update the UI with the new certificate. Default is false.
+# update_ui = true
 
-# set webdav_enabled to true if you have the WEBDAV service enabled on your FreeNAS. Default is false.
-# webdav_enabled = true
+# set update_ftp to true if you want to update the FTP service with the new certificate. Default is false.
+# update_ftp = true
+
+# set update_webdav to true if you want to update the WEBDAV service with the new certificate. Default is false.
+# update_webdav = true
