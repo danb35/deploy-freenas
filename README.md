@@ -19,6 +19,7 @@ privkey_path = /some/other/path
 fullchain_path = /some/other/other/path
 protocol = https://
 port = 443
+cert_prefix = letsencrypt
 update_ui = false
 update_ftp = false
 update_webdav = false

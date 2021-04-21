@@ -40,6 +40,9 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
+# set cert_prefix to any string you want to be the prefix of the certificate name. Default is letsencrypt.
+# cert_prefix = letsencrypt
+
 # set update_ui to true if you want to update the UI with the new certificate. Default is false.
 # update_ui = true
 

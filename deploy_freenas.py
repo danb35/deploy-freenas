@@ -53,11 +53,12 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
+CERT_PREFIX = deploy.get('cert_prefix','letsencrypt')
 UPDATE_UI = deploy.getboolean('update_ui',fallback=False)
 UPDATE_FTP = deploy.getboolean('update_ftp',fallback=False)
 UPDATE_WEBDAV = deploy.getboolean('update_webdav',fallback=False)
 now = datetime.now()
-cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
+cert = "%s-%s-%s-%s-%s" %(CERT_PREFIX, now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
 
 
