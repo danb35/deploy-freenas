@@ -221,16 +221,31 @@ for cid in (cert_ids_same_san | cert_ids_expired):
     sys.exit(1)
 
 # Reload nginx with new cert
-# If everything goes right, the request fails with a ConnectionError
-try:
-  r = session.get(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
-    verify=VERIFY
-  )
-  # If we've arrived here, something went wrong
+# If everything goes right in 12.0-U3 and later, it returns 200
+# If everything goes right with an earlier release, the request
+# fails with a ConnectionError
+r = session.post(
+  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
+  verify=VERIFY
+)
+if r.status_code == 200:
+  print ("Reloading WebUI successful")
+  print ("deploy_freenas.py executed successfully")
+  sys.exit(0)
+elif r.status_code != 405:
   print ("Error reloading WebUI!")
   print (r.text)
   sys.exit(1)
-except requests.exceptions.ConnectionError:
-  print ("Reloading WebUI successful")
-  print ("deploy_freenas.py executed successfully")
+else:
+  try:
+    r = session.get(
+      PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/ui_restart',
+      verify=VERIFY
+    )
+    # If we've arrived here, something went wrong
+    print ("Error reloading WebUI!")
+    print (r.text)
+    sys.exit(1)
+  except requests.exceptions.ConnectionError:
+    print ("Reloading WebUI successful")
+    print ("deploy_freenas.py executed successfully")
