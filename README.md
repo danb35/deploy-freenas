@@ -19,8 +19,10 @@ privkey_path = /some/other/path
 fullchain_path = /some/other/other/path
 protocol = https://
 port = 443
-ftp_enabled = false
-webdav_enabled = false
+cert_prefix = letsencrypt
+update_ui = false
+update_ftp = false
+update_webdav = false
 ```
 
 Everything but `password` (or `api_key`) is optional, and the defaults are documented in `depoy_config.example`.
