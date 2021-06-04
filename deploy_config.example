@@ -45,3 +45,7 @@ password = YourSuperSecurePassword#@#$*
 
 # set webdav_enabled to true if you have the WEBDAV service enabled on your FreeNAS. Default is false.
 # webdav_enabled = true
+
+# Certificates will be given a name with a timestamp, by default it will be
+# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
+# cert_base_name = something_else

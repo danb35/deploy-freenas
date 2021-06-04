@@ -8,9 +8,9 @@ database and captured in a backup.
 Requires paths to the cert (including the any intermediate CA certs) and private key,
 and username, password, and FQDN of your FreeNAS system.
 
-Your private key should only be readable by root, so this script must run with root
-privileges.  And, since it contains your root password, this script itself should
-only be readable by root.
+The config file contains your root password or API key, so it should only be readable by
+root.  Your private key should also only be readable by root, so this script must run 
+with root privileges.
 
 Source: https://github.com/danb35/deploy-freenas
 """
@@ -55,8 +55,9 @@ PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
+CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
-cert = "letsencrypt-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
+cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
 
 
