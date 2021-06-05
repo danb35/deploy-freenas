@@ -8,9 +8,9 @@ database and captured in a backup.
 Requires paths to the cert (including the any intermediate CA certs) and private key,
 and username, password, and FQDN of your FreeNAS system.
 
-Your private key should only be readable by root, so this script must run with root
-privileges.  And, since it contains your root password, this script itself should
-only be readable by root.
+The config file contains your root password or API key, so it should only be readable by
+root.  Your private key should also only be readable by root, so this script must run 
+with root privileges.
 
 Source: https://github.com/danb35/deploy-freenas
 """
@@ -53,12 +53,12 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
-CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 UPDATE_UI = deploy.getboolean('update_ui',fallback=False)
 UPDATE_FTP = deploy.getboolean('update_ftp',fallback=False)
 UPDATE_WEBDAV = deploy.getboolean('update_webdav',fallback=False)
+CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
-cert = "%s-%s-%s-%s-%s" %(CERT_BASE_NAME, now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
+cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
 
 

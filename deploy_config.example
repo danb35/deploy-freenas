@@ -40,9 +40,6 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
-# set cert_base_name to any string you want to be the prefix of the certificate name. Default is letsencrypt.
-# cert_base_name = letsencrypt
-
 # set update_ui to true if you want to update the UI with the new certificate. Default is false.
 # update_ui = true
 
@@ -51,3 +48,7 @@ password = YourSuperSecurePassword#@#$*
 
 # set update_webdav to true if you want to update the WEBDAV service with the new certificate. Default is false.
 # update_webdav = true
+
+# Certificates will be given a name with a timestamp, by default it will be
+# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like. Default is letsencrypt.
+# cert_base_name = something_else
