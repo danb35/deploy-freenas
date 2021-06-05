@@ -83,9 +83,12 @@ with open(PRIVATEKEY_PATH, 'r') as file:
 with open(FULLCHAIN_PATH, 'r') as file:
   full_chain = file.read()
 
+# Construct BASE_URL
+BASE_URL = PROTOCOL + FREENAS_ADDRESS + ':' + PORT
+
 # Update or create certificate
 r = session.post(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
+  BASE_URL + '/api/v2.0/certificate/',
   verify=VERIFY,
   data=json.dumps({
     "create_type": "CERTIFICATE_CREATE_IMPORTED",
@@ -108,7 +111,7 @@ time.sleep(5)
 # Download certificate list
 limit = {'limit': 0} # set limit to 0 to disable paging in the event of many certificates
 r = session.get(
-  PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/',
+  BASE_URL + '/api/v2.0/certificate/',
   verify=VERIFY,
   params=limit
 )
@@ -137,7 +140,7 @@ if not new_cert_data:
 if UPDATE_UI:
   # Set our cert as active for UI
   r = session.put(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/system/general/',
+    BASE_URL + '/api/v2.0/system/general/',
     verify=VERIFY,
     data=json.dumps({
       "ui_certificate": cert_id,
@@ -154,7 +157,7 @@ if UPDATE_UI:
 if UPDATE_FTP:
   # Set our cert as active for FTP plugin
   r = session.put(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/ftp/',
+    BASE_URL + '/api/v2.0/ftp/',
     verify=VERIFY,
     data=json.dumps({
       "ssltls_certificate": cert_id,
@@ -171,7 +174,7 @@ if UPDATE_FTP:
 if UPDATE_WEBDAV:
   # Set our cert as active for WEBDAV plugin
   r = session.put(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/webdav/',
+    BASE_URL + '/api/v2.0/webdav/',
     verify=VERIFY,
     data=json.dumps({
       "certssl": cert_id,
@@ -208,7 +211,7 @@ if cert_id in cert_ids_same_san:
 # Delete expired and old certificates with same SAN from freenas
 for cid in (cert_ids_same_san | cert_ids_expired):
   r = session.delete(
-    PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/certificate/id/' + str(cid),
+    BASE_URL + '/api/v2.0/certificate/id/' + str(cid),
     verify=VERIFY
   )
 
@@ -225,20 +228,32 @@ for cid in (cert_ids_same_san | cert_ids_expired):
 
 if UPDATE_UI:
   # Reload nginx with new cert
-  # If everything goes right, the request fails with a ConnectionError
-  try:
-    r = session.post(
-      PROTOCOL + FREENAS_ADDRESS + ':' + PORT + '/api/v2.0/service/restart',
-      verify=VERIFY,
-      data=json.dumps({
-        "service": "http",
-      })
-    )
-    # If we've arrived here, something went wrong
+  # If everything goes right in 12.0-U3 and later, it returns 200
+  # If everything goes right with an earlier release, the request
+  # fails with a ConnectionError
+  r = session.post(
+    BASE_URL + '/api/v2.0/system/general/ui_restart',
+    verify=VERIFY
+  )
+  if r.status_code == 200:
+    print ("Reloading WebUI successful")
+    print ("deploy_freenas.py executed successfully")
+    sys.exit(0)
+  elif r.status_code != 405:
     print ("Error reloading WebUI!")
     print (r.text)
     sys.exit(1)
-  except requests.exceptions.ConnectionError:
-    print ("Reloading WebUI successful")
+  else:
+    try:
+      r = session.get(
+        BASE_URL + '/api/v2.0/system/general/ui_restart',
+        verify=VERIFY
+      )
+      # If we've arrived here, something went wrong
+      print ("Error reloading WebUI!")
+      print (r.text)
+      sys.exit(1)
+    except requests.exceptions.ConnectionError:
+      print ("Reloading WebUI successful")
 
 print ("deploy_freenas.py executed successfully")
