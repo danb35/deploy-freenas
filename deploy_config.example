@@ -40,12 +40,15 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
-# set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
-# ftp_enabled = true
+# set update_ui to true if you want to update the UI with the new certificate. Default is false.
+# update_ui = true
 
-# set webdav_enabled to true if you have the WEBDAV service enabled on your FreeNAS. Default is false.
-# webdav_enabled = true
+# set update_ftp to true if you want to update the FTP service with the new certificate. Default is false.
+# update_ftp = true
+
+# set update_webdav to true if you want to update the WEBDAV service with the new certificate. Default is false.
+# update_webdav = true
 
 # Certificates will be given a name with a timestamp, by default it will be
-# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
+# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like. Default is letsencrypt.
 # cert_base_name = something_else

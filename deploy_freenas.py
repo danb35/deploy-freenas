@@ -53,8 +53,9 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
-FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
-WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
+UPDATE_UI = deploy.getboolean('update_ui',fallback=False)
+UPDATE_FTP = deploy.getboolean('update_ftp',fallback=False)
+UPDATE_WEBDAV = deploy.getboolean('update_webdav',fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
@@ -136,23 +137,24 @@ if not new_cert_data:
   print ("Error searching for newly imported certificate in certificate list.")
   sys.exit(1)
 
-# Set our cert as active
-r = session.put(
-  BASE_URL + '/api/v2.0/system/general/',
-  verify=VERIFY,
-  data=json.dumps({
-    "ui_certificate": cert_id,
-  })
-)
+if UPDATE_UI:
+  # Set our cert as active for UI
+  r = session.put(
+    BASE_URL + '/api/v2.0/system/general/',
+    verify=VERIFY,
+    data=json.dumps({
+      "ui_certificate": cert_id,
+    })
+  )
 
-if r.status_code == 200:
-  print ("Setting active certificate successful")
-else:
-  print ("Error setting active certificate!")
-  print (r.text)
-  sys.exit(1)
+  if r.status_code == 200:
+    print ("Setting active UI certificate successful")
+  else:
+    print ("Error setting active UI certificate!")
+    print (r.text)
+    sys.exit(1)
 
-if FTP_ENABLED:
+if UPDATE_FTP:
   # Set our cert as active for FTP plugin
   r = session.put(
     BASE_URL + '/api/v2.0/ftp/',
@@ -169,7 +171,7 @@ if FTP_ENABLED:
     print (r.text)
     sys.exit(1)
 
-if WEBDAV_ENABLED:
+if UPDATE_WEBDAV:
   # Set our cert as active for WEBDAV plugin
   r = session.put(
     BASE_URL + '/api/v2.0/webdav/',
@@ -224,32 +226,34 @@ for cid in (cert_ids_same_san | cert_ids_expired):
     print (r.text)
     sys.exit(1)
 
-# Reload nginx with new cert
-# If everything goes right in 12.0-U3 and later, it returns 200
-# If everything goes right with an earlier release, the request
-# fails with a ConnectionError
-r = session.post(
-  BASE_URL + '/api/v2.0/system/general/ui_restart',
-  verify=VERIFY
-)
-if r.status_code == 200:
-  print ("Reloading WebUI successful")
-  print ("deploy_freenas.py executed successfully")
-  sys.exit(0)
-elif r.status_code != 405:
-  print ("Error reloading WebUI!")
-  print (r.text)
-  sys.exit(1)
-else:
-  try:
-    r = session.get(
-      BASE_URL + '/api/v2.0/system/general/ui_restart',
-      verify=VERIFY
-    )
-    # If we've arrived here, something went wrong
+if UPDATE_UI:
+  # Reload nginx with new cert
+  # If everything goes right in 12.0-U3 and later, it returns 200
+  # If everything goes right with an earlier release, the request
+  # fails with a ConnectionError
+  r = session.post(
+    BASE_URL + '/api/v2.0/system/general/ui_restart',
+    verify=VERIFY
+  )
+  if r.status_code == 200:
+    print ("Reloading WebUI successful")
+    print ("deploy_freenas.py executed successfully")
+    sys.exit(0)
+  elif r.status_code != 405:
     print ("Error reloading WebUI!")
     print (r.text)
     sys.exit(1)
-  except requests.exceptions.ConnectionError:
-    print ("Reloading WebUI successful")
-    print ("deploy_freenas.py executed successfully")
+  else:
+    try:
+      r = session.get(
+        BASE_URL + '/api/v2.0/system/general/ui_restart',
+        verify=VERIFY
+      )
+      # If we've arrived here, something went wrong
+      print ("Error reloading WebUI!")
+      print (r.text)
+      sys.exit(1)
+    except requests.exceptions.ConnectionError:
+      print ("Reloading WebUI successful")
+
+print ("deploy_freenas.py executed successfully")
