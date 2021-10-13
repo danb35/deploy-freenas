@@ -40,6 +40,9 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
+# set s3_enabled to true if you have the S3 service enabled on your FreeNAS. Default is false.
+# s3_enabled = true
+
 # set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
 # ftp_enabled = true
 
