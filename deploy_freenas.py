@@ -242,6 +242,21 @@ for cid in (cert_ids_same_san | cert_ids_expired):
     print (r.text)
     sys.exit(1)
 
+# Reload minio with new cert
+if S3_ENABLED:
+  r = session.post(
+    BASE_URL + '/api/v2.0/service/restart',
+    verify=VERIFY,
+    data=json.dumps({
+      "service": "s3",
+    }),
+  )
+  if r.status_code == 200:
+    print ("Reloading S3 service successful")
+  else:
+    print ("Error reloading S3 service!")
+    print (r.text)
+    
 # Reload nginx with new cert
 # If everything goes right in 12.0-U3 and later, it returns 200
 # If everything goes right with an earlier release, the request
