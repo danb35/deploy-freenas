@@ -53,6 +53,7 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
+S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
@@ -152,6 +153,23 @@ else:
   print (r.text)
   sys.exit(1)
 
+if S3_ENABLED:
+  # Set our cert as active for S3 plugin
+  r = session.put(
+    BASE_URL + '/api/v2.0/s3/',
+    verify=VERIFY,
+    data=json.dumps({
+      "certificate": cert_id,
+    }),
+  )
+
+  if r.status_code == 200:
+    print ("Setting active S3 certificate successful")
+  else:
+    print ("Error setting active S3 certificate!")
+    print (r)
+    sys.exit(1)
+
 if FTP_ENABLED:
   # Set our cert as active for FTP plugin
   r = session.put(
@@ -224,6 +242,21 @@ for cid in (cert_ids_same_san | cert_ids_expired):
     print (r.text)
     sys.exit(1)
 
+# Reload minio with new cert
+if S3_ENABLED:
+  r = session.post(
+    BASE_URL + '/api/v2.0/service/restart',
+    verify=VERIFY,
+    data=json.dumps({
+      "service": "s3",
+    }),
+  )
+  if r.status_code == 200:
+    print ("Reloading S3 service successful")
+  else:
+    print ("Error reloading S3 service!")
+    print (r.text)
+    
 # Reload nginx with new cert
 # If everything goes right in 12.0-U3 and later, it returns 200
 # If everything goes right with an earlier release, the request
