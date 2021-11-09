@@ -211,11 +211,12 @@ for cert_data in cert_list:
   if set(cert_data['san']) == set(new_cert_data['san']):
       cert_ids_same_san.add(cert_data['id'])
 
-  issued_date = datetime.strptime(cert_data['from'], "%c")
-  lifetime = timedelta(days=cert_data['lifetime'])
-  expiration_date = issued_date + lifetime
-  if expiration_date < now:
-      cert_ids_expired.add(cert_data['id'])
+  if not cert_data['cert_type_CSR']:
+      issued_date = datetime.strptime(cert_data['from'], "%c")
+      lifetime = timedelta(days=cert_data['lifetime'])
+      expiration_date = issued_date + lifetime
+      if expiration_date < now:
+          cert_ids_expired.add(cert_data['id'])
 
 # Remove new cert_id from lists
 if cert_id in cert_ids_expired:
