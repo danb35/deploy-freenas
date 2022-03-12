@@ -7,7 +7,7 @@ This script can run on any machine running Python 3 that has network access to y
 
 # Usage
 
-The relevant configuration takes place in the `deploy_config` file.  You can create this file either by copying `depoy_config.example` from this repository, or directly using your preferred text editor.  Its format is as follows:
+The relevant configuration takes place in the `deploy_config` file.  You can create this file either by copying `deploy_config.example` from this repository, or directly using your preferred text editor.  Its format is as follows:
 
 ```
 [deploy]
@@ -25,7 +25,7 @@ webdav_enabled = false
 cert_base_name = letsencrypt
 ```
 
-Everything but `password` (or `api_key`) is optional, and the defaults are documented in `depoy_config.example`.
+Everything but `password` (or `api_key`) is optional, and the defaults are documented in `deploy_config.example`.
 
 On TrueNAS (Core) 12.0 and up you should use API key authentication instead of password authentication.
 [Generate a new API token in the UI](https://www.truenas.com/docs/hub/additional-topics/api/#creating-api-keys) first, then add it as `api_key` to the config, which replaces the `password` field:
