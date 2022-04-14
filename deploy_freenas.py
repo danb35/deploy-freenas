@@ -56,6 +56,7 @@ PORT = deploy.get('port','80')
 S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
+APPS_ENABLED = deploy.get('apps_enabled', fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
@@ -257,7 +258,45 @@ if S3_ENABLED:
   else:
     print ("Error reloading S3 service!")
     print (r.text)
-    
+
+if APPS_ENABLED:
+  r = session.get(
+    BASE_URL + '/api/v2.0/chart/release',
+    verify=VERIFY,
+    params={'limit': 0})
+  if r.status_code == 200:
+    print("Getting apps successful")
+  else:
+    print("Error getting apps")
+    print(r)
+    sys.exit(1)
+  
+  apps = r.json()
+  for app in apps:
+    print(f"Working on {app['name']}")
+    # Filter out every configuration object that starts with "ix". Those are generated.
+    config = {k: v for (k,v) in app['config'].items() if not k.startswith("ix") }
+    chart_id = app['id']
+    if config['ingress']['main']['enabled'] and len(config['ingress']['main']['tls']) > 0:
+      print(f"Modifying {app['name']} to use the new certificate")
+      # Update the TLS certificate ID
+      for idx, tls in enumerate(config['ingress']['main']['tls']):
+        tls['scaleCert'] = cert_id
+        config['ingress']['main']['tls'][idx] = tls
+     
+      r = session.put(
+        BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
+        verify=VERIFY,
+        data=json.dumps({
+          'values': config
+        }))
+      if r.status_code == 200:
+        print(f"Setting certificate for {app['name']} Successful!")
+      else:
+        print(f"Failed setting certificate for {app['name']}")
+        print(r)
+        sys.exit(1)
+
 # Reload nginx with new cert
 # If everything goes right in 12.0-U3 and later, it returns 200
 # If everything goes right with an earlier release, the request
