@@ -277,7 +277,7 @@ if APPS_ENABLED:
     # Filter out every configuration object that starts with "ix". Those are generated.
     config = {k: v for (k,v) in app['config'].items() if not k.startswith("ix") }
     chart_id = app['id']
-    if config['ingress']['main']['enabled'] and len(config['ingress']['main']['tls']) > 0:
+    if config.get("ingress", False) and config['ingress']['main']['enabled'] and len(config['ingress']['main']['tls']) > 0:
       print(f"Modifying {app['name']} to use the new certificate")
       # Update the TLS certificate ID
       for idx, tls in enumerate(config['ingress']['main']['tls']):
