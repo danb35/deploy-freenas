@@ -210,7 +210,8 @@ cert_ids_same_san = set()
 cert_ids_expired = set()
 for cert_data in cert_list:
   if set(cert_data['san']) == set(new_cert_data['san']):
-      cert_ids_same_san.add(cert_data['id'])
+      if cert_data['name'].startswith("letsencrypt"):
+        cert_ids_same_san.add(cert_data['id'])
 
   if not cert_data['cert_type_CSR']:
       issued_date = datetime.strptime(cert_data['from'], "%c")
