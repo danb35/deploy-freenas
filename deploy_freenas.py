@@ -53,6 +53,7 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
+UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled',fallback=True)
 S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
@@ -138,21 +139,22 @@ if not new_cert_data:
   print ("Error searching for newly imported certificate in certificate list.")
   sys.exit(1)
 
-# Set our cert as active
-r = session.put(
-  BASE_URL + '/api/v2.0/system/general/',
-  verify=VERIFY,
-  data=json.dumps({
-    "ui_certificate": cert_id,
-  })
-)
+if UI_CERTIFICATE_ENABLED:
+  # Set our cert as active
+  r = session.put(
+    BASE_URL + '/api/v2.0/system/general/',
+    verify=VERIFY,
+    data=json.dumps({
+      "ui_certificate": cert_id,
+    })
+  )
 
-if r.status_code == 200:
-  print ("Setting active certificate successful")
-else:
-  print ("Error setting active certificate!")
-  print (r.text)
-  sys.exit(1)
+  if r.status_code == 200:
+    print ("Setting active certificate successful")
+  else:
+    print ("Error setting active certificate!")
+    print (r.text)
+    sys.exit(1)
 
 if S3_ENABLED:
   # Set our cert as active for S3 plugin
@@ -298,32 +300,33 @@ if APPS_ENABLED:
         print(r)
         sys.exit(1)
 
-# Reload nginx with new cert
-# If everything goes right in 12.0-U3 and later, it returns 200
-# If everything goes right with an earlier release, the request
-# fails with a ConnectionError
-r = session.post(
-  BASE_URL + '/api/v2.0/system/general/ui_restart',
-  verify=VERIFY
-)
-if r.status_code == 200:
-  print ("Reloading WebUI successful")
-  print ("deploy_freenas.py executed successfully")
-  sys.exit(0)
-elif r.status_code != 405:
-  print ("Error reloading WebUI!")
-  print (r.text)
-  sys.exit(1)
-else:
-  try:
-    r = session.get(
-      BASE_URL + '/api/v2.0/system/general/ui_restart',
-      verify=VERIFY
-    )
-    # If we've arrived here, something went wrong
+if UI_CERTIFICATE_ENABLED:
+  # Reload nginx with new cert
+  # If everything goes right in 12.0-U3 and later, it returns 200
+  # If everything goes right with an earlier release, the request
+  # fails with a ConnectionError
+  r = session.post(
+    BASE_URL + '/api/v2.0/system/general/ui_restart',
+    verify=VERIFY
+  )
+  if r.status_code == 200:
+    print ("Reloading WebUI successful")
+    print ("deploy_freenas.py executed successfully")
+    sys.exit(0)
+  elif r.status_code != 405:
     print ("Error reloading WebUI!")
     print (r.text)
     sys.exit(1)
-  except requests.exceptions.ConnectionError:
-    print ("Reloading WebUI successful")
-    print ("deploy_freenas.py executed successfully")
+  else:
+    try:
+      r = session.get(
+        BASE_URL + '/api/v2.0/system/general/ui_restart',
+        verify=VERIFY
+      )
+      # If we've arrived here, something went wrong
+      print ("Error reloading WebUI!")
+      print (r.text)
+      sys.exit(1)
+    except requests.exceptions.ConnectionError:
+      print ("Reloading WebUI successful")
+      print ("deploy_freenas.py executed successfully")

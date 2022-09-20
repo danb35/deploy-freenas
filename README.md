@@ -19,6 +19,7 @@ privkey_path = /some/other/path
 fullchain_path = /some/other/other/path
 protocol = https://
 port = 443
+ui_certificate_enabled = false
 s3_enabled = false
 ftp_enabled = false
 webdav_enabled = false
