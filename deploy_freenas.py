@@ -56,7 +56,7 @@ PORT = deploy.get('port','80')
 S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
-APPS_ENABLED = deploy.get('apps_enabled', fallback=False)
+APPS_ENABLED = deploy.getboolean('apps_enabled', fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
