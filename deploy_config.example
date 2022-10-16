@@ -40,6 +40,9 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
+# set ui_certificate_enabled to false if you want to skip using the new cerificate for the UI. Default is true.
+# ui_certificate_enabled = false
+
 # set s3_enabled to true if you have the S3 service enabled on your FreeNAS. Default is false.
 # s3_enabled = true
 
