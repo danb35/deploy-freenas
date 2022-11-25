@@ -2,7 +2,7 @@
 
 """
 Import and activate a SSL/TLS certificate into FreeNAS 11.1 or later
-Uses the FreeNAS API to make the change, so everything's properly saved in the config
+Uses the FreeNAS/TrueNAS API to make the change, so everything's properly saved in the config
 database and captured in a backup.
 
 Requires paths to the cert (including the any intermediate CA certs) and private key,
@@ -58,6 +58,7 @@ S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
 APPS_ENABLED = deploy.getboolean('apps_enabled', fallback=False)
+APPS_ONLY_MATCHING_SAN = deploy.getboolean('apps_only_matching_san', fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
@@ -284,21 +285,44 @@ if APPS_ENABLED:
       print(f"Modifying {app['name']} to use the new certificate")
       # Update the TLS certificate ID
       for idx, tls in enumerate(config['ingress']['main']['tls']):
-        tls['scaleCert'] = cert_id
-        config['ingress']['main']['tls'][idx] = tls
-     
-      r = session.put(
-        BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
-        verify=VERIFY,
-        data=json.dumps({
-          'values': config
-        }))
-      if r.status_code == 200:
-        print(f"Setting certificate for {app['name']} Successful!")
-      else:
-        print(f"Failed setting certificate for {app['name']}")
-        print(r)
-        sys.exit(1)
+
+        if APPS_ONLY_MATCHING_SAN:
+          # Only update certs which have the same sans as the new one 
+          for current_cert_data in cert_list:
+            if current_cert_data['id'] == tls['scaleCert']:
+              if sorted(current_cert_data['san']) == sorted(new_cert_data['san']):
+
+                tls['scaleCert'] = cert_id
+                config['ingress']['main']['tls'][idx] = tls
+
+                r = session.put(
+                  BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
+                  verify=VERIFY,
+                  data=json.dumps({
+                    'values': config
+                  }))
+                if r.status_code == 200:
+                  print(f"Setting certificate for {app['name']} Successful!")
+                else:
+                  print(f"Failed setting certificate for {app['name']}")
+                  print(r)
+                  sys.exit(1)
+                break
+        else:
+          tls['scaleCert'] = cert_id
+          config['ingress']['main']['tls'][idx] = tls
+          r = session.put(
+            BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
+            verify=VERIFY,
+            data=json.dumps({
+            'values': config
+           }))
+          if r.status_code == 200:
+            print(f"Setting certificate for {app['name']} Successful!")
+          else:
+            print(f"Failed setting certificate for {app['name']}")
+            print(r)
+            sys.exit(1)
 
 if UI_CERTIFICATE_ENABLED:
   # Reload nginx with new cert
