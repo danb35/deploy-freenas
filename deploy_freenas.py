@@ -2,7 +2,7 @@
 
 """
 Import and activate a SSL/TLS certificate into FreeNAS 11.1 or later
-Uses the FreeNAS API to make the change, so everything's properly saved in the config
+Uses the FreeNAS/TrueNAS API to make the change, so everything's properly saved in the config
 database and captured in a backup.
 
 Requires paths to the cert (including the any intermediate CA certs) and private key,
@@ -53,10 +53,12 @@ PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
+UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled',fallback=True)
 S3_ENABLED = deploy.getboolean('s3_enabled',fallback=False)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 WEBDAV_ENABLED = deploy.getboolean('webdav_enabled',fallback=False)
-APPS_ENABLED = deploy.get('apps_enabled', fallback=False)
+APPS_ENABLED = deploy.getboolean('apps_enabled', fallback=False)
+APPS_ONLY_MATCHING_SAN = deploy.getboolean('apps_only_matching_san', fallback=False)
 CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
@@ -138,21 +140,22 @@ if not new_cert_data:
   print ("Error searching for newly imported certificate in certificate list.")
   sys.exit(1)
 
-# Set our cert as active
-r = session.put(
-  BASE_URL + '/api/v2.0/system/general/',
-  verify=VERIFY,
-  data=json.dumps({
-    "ui_certificate": cert_id,
-  })
-)
+if UI_CERTIFICATE_ENABLED:
+  # Set our cert as active
+  r = session.put(
+    BASE_URL + '/api/v2.0/system/general/',
+    verify=VERIFY,
+    data=json.dumps({
+      "ui_certificate": cert_id,
+    })
+  )
 
-if r.status_code == 200:
-  print ("Setting active certificate successful")
-else:
-  print ("Error setting active certificate!")
-  print (r.text)
-  sys.exit(1)
+  if r.status_code == 200:
+    print ("Setting active certificate successful")
+  else:
+    print ("Error setting active certificate!")
+    print (r.text)
+    sys.exit(1)
 
 if S3_ENABLED:
   # Set our cert as active for S3 plugin
@@ -282,48 +285,72 @@ if APPS_ENABLED:
       print(f"Modifying {app['name']} to use the new certificate")
       # Update the TLS certificate ID
       for idx, tls in enumerate(config['ingress']['main']['tls']):
-        tls['scaleCert'] = cert_id
-        config['ingress']['main']['tls'][idx] = tls
-     
-      r = session.put(
-        BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
-        verify=VERIFY,
-        data=json.dumps({
-          'values': config
-        }))
-      if r.status_code == 200:
-        print(f"Setting certificate for {app['name']} Successful!")
-      else:
-        print(f"Failed setting certificate for {app['name']}")
-        print(r)
-        sys.exit(1)
 
-# Reload nginx with new cert
-# If everything goes right in 12.0-U3 and later, it returns 200
-# If everything goes right with an earlier release, the request
-# fails with a ConnectionError
-r = session.post(
-  BASE_URL + '/api/v2.0/system/general/ui_restart',
-  verify=VERIFY
-)
-if r.status_code == 200:
-  print ("Reloading WebUI successful")
-  print ("deploy_freenas.py executed successfully")
-  sys.exit(0)
-elif r.status_code != 405:
-  print ("Error reloading WebUI!")
-  print (r.text)
-  sys.exit(1)
-else:
-  try:
-    r = session.get(
-      BASE_URL + '/api/v2.0/system/general/ui_restart',
-      verify=VERIFY
-    )
-    # If we've arrived here, something went wrong
+        if APPS_ONLY_MATCHING_SAN:
+          # Only update certs which have the same sans as the new one 
+          for current_cert_data in cert_list:
+            if current_cert_data['id'] == tls['scaleCert']:
+              if sorted(current_cert_data['san']) == sorted(new_cert_data['san']):
+
+                tls['scaleCert'] = cert_id
+                config['ingress']['main']['tls'][idx] = tls
+
+                r = session.put(
+                  BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
+                  verify=VERIFY,
+                  data=json.dumps({
+                    'values': config
+                  }))
+                if r.status_code == 200:
+                  print(f"Setting certificate for {app['name']} Successful!")
+                else:
+                  print(f"Failed setting certificate for {app['name']}")
+                  print(r)
+                  sys.exit(1)
+                break
+        else:
+          tls['scaleCert'] = cert_id
+          config['ingress']['main']['tls'][idx] = tls
+          r = session.put(
+            BASE_URL + f'/api/v2.0/chart/release/id/{chart_id}',
+            verify=VERIFY,
+            data=json.dumps({
+            'values': config
+           }))
+          if r.status_code == 200:
+            print(f"Setting certificate for {app['name']} Successful!")
+          else:
+            print(f"Failed setting certificate for {app['name']}")
+            print(r)
+            sys.exit(1)
+
+if UI_CERTIFICATE_ENABLED:
+  # Reload nginx with new cert
+  # If everything goes right in 12.0-U3 and later, it returns 200
+  # If everything goes right with an earlier release, the request
+  # fails with a ConnectionError
+  r = session.post(
+    BASE_URL + '/api/v2.0/system/general/ui_restart',
+    verify=VERIFY
+  )
+  if r.status_code == 200:
+    print ("Reloading WebUI successful")
+    print ("deploy_freenas.py executed successfully")
+    sys.exit(0)
+  elif r.status_code != 405:
     print ("Error reloading WebUI!")
     print (r.text)
     sys.exit(1)
-  except requests.exceptions.ConnectionError:
-    print ("Reloading WebUI successful")
-    print ("deploy_freenas.py executed successfully")
+  else:
+    try:
+      r = session.get(
+        BASE_URL + '/api/v2.0/system/general/ui_restart',
+        verify=VERIFY
+      )
+      # If we've arrived here, something went wrong
+      print ("Error reloading WebUI!")
+      print (r.text)
+      sys.exit(1)
+    except requests.exceptions.ConnectionError:
+      print ("Reloading WebUI successful")
+      print ("deploy_freenas.py executed successfully")

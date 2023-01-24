@@ -40,6 +40,9 @@ password = YourSuperSecurePassword#@#$*
 # this MUST be set to your https port.
 # port = 443
 
+# set ui_certificate_enabled to false if you want to skip using the new cerificate for the UI. Default is true.
+# ui_certificate_enabled = false
+
 # set s3_enabled to true if you have the S3 service enabled on your FreeNAS. Default is false.
 # s3_enabled = true
 
@@ -51,6 +54,9 @@ password = YourSuperSecurePassword#@#$*
 
 # set apps_enabled to true if you want to update your TrueNAS SCALE chart applications to use the new certificate. Default is false.
 # apps_enabled = true
+
+# only update TrueNAS SCALE chart applications where the san of the current and the new cert matches. Default is false.
+#apps_only_matching_san = true
 
 # Certificates will be given a name with a timestamp, by default it will be
 # letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
