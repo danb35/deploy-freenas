@@ -5,6 +5,8 @@ deploy-freenas.py is a Python script to deploy TLS certificates to a FreeNAS/Tru
 # Installation
 This script can run on any machine running Python 3 that has network access to your FreeNAS/TrueNAS server, but in most cases it's best to run it directly on the FreeNAS/TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.
 
+If you're not running this script on your Free/TrueNAS server itself, you'll need to make sure that the Python `requests` module is available (it's there by default in Free/TrueNAS).  How you'll do that will depend on the OS you're using wherever you're running the script.
+
 # Usage
 
 The relevant configuration takes place in the `deploy_config` file.  You can create this file either by copying `deploy_config.example` from this repository, or directly using your preferred text editor.  Its format is as follows:
