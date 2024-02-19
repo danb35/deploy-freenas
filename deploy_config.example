@@ -24,12 +24,12 @@ password = YourSuperSecurePassword#@#$*
 
 # privkey_path is the path to the certificate private key on your system.  Default
 # assumes you're using acme.sh:
-# /root/.acme.sh/cert_fqdn/cert_fqdn.key
+# /root/.acme.sh/cert_fqdn/cert_fqdn.key or /root/.acme.sh/cert_fqdn_ecc/cert_fqdn.key
 # privkey_path = /some/other/path
 
 # fullchain_path is the path to the full chain (leaf cert + intermediate certs)
 # on your system.  Default assumes you're using acme.sh:
-# /root/.acme.sh/cert_fqdn/fullchain.cer
+# /root/.acme.sh/cert_fqdn/fullchain.cer or /root/.acme.sh/cert_fqdn_ecc/fullchain.cer
 # fullchain_path = /some/other/other/path
 
 # protocol sets the connection protocol, http or https.  Include '://' at the end.

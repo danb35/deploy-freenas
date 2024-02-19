@@ -49,15 +49,11 @@ PASSWORD = deploy.get('password')
 DOMAIN_NAME = deploy.get('cert_fqdn',socket.gethostname())
 FREENAS_ADDRESS = deploy.get('connect_host','localhost')
 VERIFY = deploy.getboolean('verify',fallback=False)
-try:
-   PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key")
-   open(PRIVATEKEY_PATH, 'r')
-except FileNotFoundError:
+PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key")
+if os.path.isfile(PRIVATEKEY_PATH)==False:
   PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "_ecc/" + DOMAIN_NAME + ".key")
-try:
-   FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
-   open(FULLCHAIN_PATH, 'r')
-except FileNotFoundError:
+FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
+if os.path.isfile(FULLCHAIN_PATH)==False:
   FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "_ecc/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
