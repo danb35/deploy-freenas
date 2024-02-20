@@ -50,7 +50,11 @@ DOMAIN_NAME = deploy.get('cert_fqdn',socket.gethostname())
 FREENAS_ADDRESS = deploy.get('connect_host','localhost')
 VERIFY = deploy.getboolean('verify',fallback=False)
 PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "/" + DOMAIN_NAME + ".key")
+if os.path.isfile(PRIVATEKEY_PATH)==False:
+  PRIVATEKEY_PATH = deploy.get('privkey_path',"/root/.acme.sh/" + DOMAIN_NAME + "_ecc/" + DOMAIN_NAME + ".key")
 FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "/fullchain.cer")
+if os.path.isfile(FULLCHAIN_PATH)==False:
+  FULLCHAIN_PATH = deploy.get('fullchain_path',"/root/.acme.sh/" + DOMAIN_NAME + "_ecc/fullchain.cer")
 PROTOCOL = deploy.get('protocol','http://')
 PORT = deploy.get('port','80')
 UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled',fallback=True)
