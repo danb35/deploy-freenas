@@ -1,13 +1,16 @@
 # deploy-freenas
 
-deploy-freenas.py is a Python script to deploy TLS certificates to a FreeNAS/TrueNAS (Core) server using the FreeNAS/TrueNAS API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  Its original intent was to be called from a Let's Encrypt client like [acme.sh](https://github.com/Neilpang/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.  However, it can be used with certificates from any source, whether a different ACME-based certificate authority or otherwise.
+deploy-freenas.py is a Python script to deploy TLS certificates to a TrueNAS SCALE server using the TrueNAS Websocket API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  Its original intent was to be called from an ACME client like [acme.sh](https://github.com/acmesh-official/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.  However, it can be used with certificates from any source, whether a different ACME-based certificate authority or otherwise.
 
 Since this script was developed, acme.sh has added a [deployment script](https://github.com/acmesh-official/acme.sh/wiki/deployhooks#25-deploy-the-cert-on-truenas-core-server) which can deploy newly-issued certs to your TrueNAS system, so you may not need this script.  However, it isn't clear whether the acme.sh deployment script handles the services covered by this script (S3, FTP, WebDAV, Apps for SCALE).
 
-# Installation
-This script can run on any machine running Python 3 that has network access to your FreeNAS/TrueNAS server, but in most cases it's best to run it directly on the FreeNAS/TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.
+# WORK IN PROGRESS
+This version of this script is a work in progress.  Connection to a host separate from the one on which the script is being run is not currently supported due to an apparent bug in iX' API client.
 
-If you're not running this script on your Free/TrueNAS server itself, you'll need to make sure that the Python `requests` module is available (it's there by default in Free/TrueNAS).  How you'll do that will depend on the OS you're using wherever you're running the script.
+# Installation
+This script can run on any machine running Python 3 that has network access to your TrueNAS server, but in most cases it's best to run it directly on the TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.  If you're installing this on your TrueNAS server, it cannot be in your home directory; place it in a convenient place on a storage pool instead.
+
+If you're not running this script on your TrueNAS server itself, you'll need to make sure that the Python `requests` module is available (it's there by default in TrueNAS).  How you'll do that will depend on the OS you're using wherever you're running the script.  You'll also need to install the TrueNAS API client; you can do this by running `pip install git+https://github.com/truenas/api_client.git`.
 
 # Usage
 
@@ -15,24 +18,18 @@ The relevant configuration takes place in the `deploy_config` file.  You can cre
 
 ```
 [deploy]
-password = YourReallySecureRootPassword
-cert_fqdn = foo.bar.baz
+api_key = YourReallySecureAPIKey
 connect_host = baz.bar.foo
 verify = false
 privkey_path = /some/other/path
 fullchain_path = /some/other/other/path
-protocol = https://
-port = 443
-ui_certificate_enabled = false
-s3_enabled = false
+ui_certificate_enabled = true
 ftp_enabled = false
-webdav_enabled = false
 apps_enabled = false
-apps_only_matching_san = false
 cert_base_name = letsencrypt
 ```
 
-Everything but `password` (or `api_key`) is optional, and the defaults are documented in `deploy_config.example`.
+Everything but `api_key` is optional, and the defaults are documented in `deploy_config.example`.
 
 On TrueNAS (Core) 12.0 and up you should use API key authentication instead of password authentication.
 [Generate a new API token in the UI](https://www.truenas.com/docs/hub/additional-topics/api/#creating-api-keys) first, then add it as `api_key` to the config, which replaces the `password` field:
