@@ -41,7 +41,7 @@ else:
 
 API_KEY = deploy.get('api_key')
 CONNECT_HOST = deploy.get('connect_host',"localhost")
-CONNECT_URI = "ws://" + CONNECT_HOST + "/api/current"
+CONNECT_URI = "ws://" + CONNECT_HOST + "/websocket"
 
 PRIVATEKEY_PATH = deploy.get('privkey_path')
 if os.path.isfile(PRIVATEKEY_PATH)==False:
@@ -82,14 +82,18 @@ with Client() as c:
         print("UI cert updated to " + cert_name + "\n")
         # Restart the UI
         c.call("system.general.ui_restart")
+  
     if FTP_ENABLED==True:
         # Update the FTP service to use the new cert
         args = {"ssltls_certificate": cert_id}
         c.call("ftp.update", args)
         print("FTP cert updated to " + cert_name + "\n")
     
-    # Update apps
     if APPS_ENABLED==True:
+        # Update apps.  Any app whose configuration includes "ix_certificates" where
+        # that dictionary includes any content are updated to use the cert we just
+        # uploaded.  This should mean any catalog apps for which a certificate has been
+        # configured.
         apps = c.call("app.query")
         for app in apps:
             app_config = c.call("app.config", (app["id"]))
@@ -97,8 +101,11 @@ with Client() as c:
             if ix_certificates in app_config and app_config['ix_certificates']:
                 c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
             
-    # Delete old certs
     if DELETE_OLD_CERTS==True:
+        # Delete old certs.  Any existing certs whose name start with CERT_BASE_NAME
+        # that aren't what we just uploaded are deleted.  Certs with different names
+        # are ignored.  The Force flag isn't used, so attempts to delete a cert that's
+        # in use will cause the script to fail.
         certs = c.call("certificate.query")
         for cert in certs:
             name = cert['name']
