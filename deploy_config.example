@@ -29,10 +29,9 @@ api_key = YourNewlyGeneratedAPIKey#@#$*
 # ftp_enabled = true
 
 # set apps_enabled to true if you want to update your TrueNAS SCALE chart applications to use the new certificate. Default is false.
+# If this is enabled, any catalog app that's already set to use a certificate will be updated to use the new one.  Custom apps,
+# or apps without a certificate configured, will not be adjusted.
 # apps_enabled = true
-
-# only update TrueNAS SCALE chart applications where the san of the current and the new cert matches. Default is false.
-#apps_only_matching_san = true
 
 # Certificates will be given a name with a timestamp, by default it will be
 # letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.

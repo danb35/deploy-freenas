@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Import and activate a SSL/TLS certificate into FreeNAS 11.1 or later
-Uses the FreeNAS/TrueNAS API to make the change, so everything's properly saved in the config
+Import and activate a SSL/TLS certificate into TrueNAS SCALE 24.10 or later
+Uses the TrueNAS API to make the change, so everything's properly saved in the config
 database and captured in a backup.
 
 Requires paths to the cert (including the any intermediate CA certs).  If deploying to a
@@ -111,4 +111,3 @@ with Client() as c:
             name = cert['name']
             if name.startswith(CERT_BASE_NAME) and cert['id'] != cert_id:
                 c.call("certificate.delete", cert['id'], job=True)
-    
