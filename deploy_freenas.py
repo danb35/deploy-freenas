@@ -5,11 +5,11 @@ Import and activate a SSL/TLS certificate into TrueNAS SCALE 24.10 or later
 Uses the TrueNAS API to make the change, so everything's properly saved in the config
 database and captured in a backup.
 
-Requires paths to the cert (including the any intermediate CA certs).  If deploying to a
-remote TrueNAS system, also requires FQDN of the remote NAS and an API key with
-appropriate permissions.
+Requires paths to the cert (including the any intermediate CA certs) and private key.  
+Also requires an API key with appropriate permissions.  If deploying to a
+remote TrueNAS system, also requires FQDN of the remote NAS.
 
-The config file contains your root password or API key, so it should only be readable by
+The config file contains your API key, so it should only be readable by
 root.  Your private key should also only be readable by root, so this script must run 
 with root privileges.
 
@@ -67,27 +67,24 @@ with open(PRIVATEKEY_PATH, 'r') as file:
 with open(FULLCHAIN_PATH, 'r') as file:
     full_chain = file.read()
 
-with Client() as c:
-    # c.call("auth.login_with_api_key", API_KEY)
+with Client(CONNECT_URI) as c:
+    c.call("auth.login_with_api_key", API_KEY)
     # Import the certificate
     args = {"name": cert_name, "certificate": full_chain, "privatekey": priv_key, "create_type": "CERTIFICATE_CREATE_IMPORTED"}
     cert = c.call("certificate.create", args, job=True)
     print("Certificate " + cert_name + " imported.\n")
     cert_id = cert["id"]
-    # print("cert_id is " + cert_id + "\n")
     if UI_CERTIFICATE_ENABLED==True:
         # Update the UI to use the new cert
         args = {"ui_certificate": cert_id}
         c.call("system.general.update", args)
-        print("UI cert updated to " + cert_name + "\n")
-        # Restart the UI
-        c.call("system.general.ui_restart")
+        print("UI cert updated to " + cert_name)
   
     if FTP_ENABLED==True:
         # Update the FTP service to use the new cert
         args = {"ssltls_certificate": cert_id}
         c.call("ftp.update", args)
-        print("FTP cert updated to " + cert_name + "\n")
+        print("FTP cert updated to " + cert_name)
     
     if APPS_ENABLED==True:
         # Update apps.  Any app whose configuration includes "ix_certificates" where
@@ -97,9 +94,11 @@ with Client() as c:
         apps = c.call("app.query")
         for app in apps:
             app_config = c.call("app.config", (app["id"]))
-            # if app_config.get("ix_certificates") != None:
-            if ix_certificates in app_config and app_config['ix_certificates']:
+            if 'ix_certificates' in app_config and app_config['ix_certificates']:
                 c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
+                print("App "+ app["id"] + " updated to " + cert_name)
+            else:
+                print("App " + app["id"] + " not updated.")
             
     if DELETE_OLD_CERTS==True:
         # Delete old certs.  Any existing certs whose name start with CERT_BASE_NAME
@@ -110,4 +109,8 @@ with Client() as c:
         for cert in certs:
             name = cert['name']
             if name.startswith(CERT_BASE_NAME) and cert['id'] != cert_id:
+                print("Deleting cert "+ name)
                 c.call("certificate.delete", cert['id'], job=True)
+
+    # Restart the UI
+    c.call("system.general.ui_restart")
