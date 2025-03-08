@@ -17,10 +17,9 @@ api_key = YourNewlyGeneratedAPIKey#@#$*
 # Default is localhost (assuming the script is running on your FreeNAS box)
 # connect_host = baz.bar.foo
 
-# verify sets whether the script will attempt to verify the server's certificate with a HTTPS
-# connection.  Set to true if you're using a HTTPS connection to a remote host.  If connect_host
-# is set to localhost (or is unset), set to false.  Default is false.
-# verify = false
+# protocol specifies the protocol used to connect to the API.  Default is ws.
+# Set to wss for TrueNAS 25.04 and later
+# protocol = wss
 
 # set ui_certificate_enabled to false if you want to skip using the new cerificate for the UI. Default is true.
 # ui_certificate_enabled = false

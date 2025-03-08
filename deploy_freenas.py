@@ -25,6 +25,8 @@ import configparser
 import socket
 from datetime import datetime, timedelta
 from truenas_api_client import Client
+from OpenSSL import crypto
+import re
 
 parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into TrueNAS.')
 parser.add_argument('-c', '--config', default=(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -40,8 +42,9 @@ else:
     exit(1)
 
 API_KEY = deploy.get('api_key')
+PROTOCOL = deploy.get('protocol', "ws")
 CONNECT_HOST = deploy.get('connect_host',"localhost")
-CONNECT_URI = "ws://" + CONNECT_HOST + "/websocket"
+CONNECT_URI = PROTOCOL + "://" + CONNECT_HOST + "/websocket"
 
 PRIVATEKEY_PATH = deploy.get('privkey_path')
 if os.path.isfile(PRIVATEKEY_PATH)==False:
@@ -67,8 +70,41 @@ with open(PRIVATEKEY_PATH, 'r') as file:
 with open(FULLCHAIN_PATH, 'r') as file:
     full_chain = file.read()
 
+def extract_leaf_certificate(fullchain_pem):
+    """Extract the first certificate (leaf) from a full chain PEM file."""
+    certs = re.findall(r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----", 
+                       fullchain_pem, re.DOTALL)
+    if not certs:
+        raise ValueError("No valid certificate found in the provided PEM data.")
+    return certs[0]  # Return the first certificate (leaf)
+
+def validate_cert_key_pair(cert_pem, key_pem):
+    """Validate that the certificate's public key matches the private key."""
+    leaf_cert_pem = extract_leaf_certificate(cert_pem)
+
+    # Load the extracted leaf certificate and key
+    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, leaf_cert_pem)
+    key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, key_pem)
+
+    # Verify that the certificate's public key matches the private key
+    try:
+        return cert_obj.get_pubkey().to_cryptography_key().public_numbers() == \
+               key_obj.to_cryptography_key().public_key().public_numbers()
+    except Exception as e:
+        print(f"Validation error: {e}")
+        return False
+
+if validate_cert_key_pair(full_chain, priv_key):
+    print("✅ Certificate and private key match.")
+else:
+    print("❌ Certificate and private key do not match.")
+    exit(1)
+
 with Client(CONNECT_URI) as c:
-    c.call("auth.login_with_api_key", API_KEY)
+    result=c.call("auth.login_with_api_key", API_KEY)
+    if result==False:
+        print("Failed to authenticate!")
+        exit(1)
     # Import the certificate
     args = {"name": cert_name, "certificate": full_chain, "privatekey": priv_key, "create_type": "CERTIFICATE_CREATE_IMPORTED"}
     cert = c.call("certificate.create", args, job=True)
