@@ -23,6 +23,7 @@ import json
 import time
 import configparser
 import socket
+import logging
 from datetime import datetime, timedelta
 from truenas_api_client import Client
 from OpenSSL import crypto
@@ -40,6 +41,14 @@ if os.path.isfile(args.config):
 else:
     print("Config file", args.config, "does not exist!")
     exit(1)
+
+LOG = deploy.get('log_level',"INFO")
+logging.basicConfig (format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                     handlers=[
+                         logging.StreamHandler()
+                     ])
+logger = logging.getLogger()
+logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 
 API_KEY = deploy.get('api_key')
 PROTOCOL = deploy.get('protocol', "ws")
@@ -95,32 +104,35 @@ def validate_cert_key_pair(cert_pem, key_pem):
         return False
 
 if validate_cert_key_pair(full_chain, priv_key):
-    print("✅ Certificate and private key match.")
+    logger.info("✅ Certificate and private key match.")
 else:
-    print("❌ Certificate and private key do not match.")
+    logger.critical("❌ Certificate and private key do not match.")
     exit(1)
 
 with Client(CONNECT_URI) as c:
     result=c.call("auth.login_with_api_key", API_KEY)
     if result==False:
-        print("Failed to authenticate!")
+        logger.critical("Failed to authenticate!")
         exit(1)
     # Import the certificate
     args = {"name": cert_name, "certificate": full_chain, "privatekey": priv_key, "create_type": "CERTIFICATE_CREATE_IMPORTED"}
     cert = c.call("certificate.create", args, job=True)
-    print("Certificate " + cert_name + " imported.\n")
+    logger.debug(cert)
+    logger.info("Certificate " + cert_name + " imported.\n")
     cert_id = cert["id"]
     if UI_CERTIFICATE_ENABLED==True:
         # Update the UI to use the new cert
         args = {"ui_certificate": cert_id}
-        c.call("system.general.update", args)
-        print("UI cert updated to " + cert_name)
+        result = c.call("system.general.update", args)
+        logger.debug(result)
+        logger.info("UI cert updated to " + cert_name)
   
     if FTP_ENABLED==True:
         # Update the FTP service to use the new cert
         args = {"ssltls_certificate": cert_id}
-        c.call("ftp.update", args)
-        print("FTP cert updated to " + cert_name)
+        result = c.call("ftp.update", args)
+        logger.debug(result)
+        logger.info("FTP cert updated to " + cert_name)
     
     if APPS_ENABLED==True:
         # Update apps.  Any app whose configuration includes "ix_certificates" where
@@ -128,13 +140,16 @@ with Client(CONNECT_URI) as c:
         # uploaded.  This should mean any catalog apps for which a certificate has been
         # configured.
         apps = c.call("app.query")
+        logger.debug(APPS_ONLY_MATCHING_SAN)
         for app in apps:
             app_config = c.call("app.config", (app["id"]))
+            logger.debug(app_config)
             if 'ix_certificates' in app_config and app_config['ix_certificates']:
-                c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
-                print("App "+ app["id"] + " updated to " + cert_name)
+                result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
+                logger.debug(result)
+                logger.info("App "+ app["id"] + " updated to " + cert_name)
             else:
-                print("App " + app["id"] + " not updated.")
+                logger.info("App " + app["id"] + " not updated.")
             
     if DELETE_OLD_CERTS==True:
         # Delete old certs.  Any existing certs whose name start with CERT_BASE_NAME

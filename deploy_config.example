@@ -35,3 +35,7 @@ api_key = YourNewlyGeneratedAPIKey#@#$*
 # Certificates will be given a name with a timestamp, by default it will be
 # letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
 # cert_base_name = something_else
+
+# log_level defines how verbose the script will be.  Valid values are debug, info,
+# warning, error, and critical.  Default is info.
+# log_level = debug
