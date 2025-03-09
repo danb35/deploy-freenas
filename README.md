@@ -8,7 +8,7 @@ Since this script was developed, acme.sh has added a [deployment script](https:/
 This version of this script is a work in progress, and has had minimal testing.
 
 # Known issues
-Connections to the Websocket API will fail if you have a HTTP -> HTTPS redirect enabled, either in TrueNAS itself or in some other system (e.g., Traefik) in front of TrueNAS.  This results from an [issue](https://github.com/truenas/api_client/issues/13) in the upstream API client.
+Connections to the Websocket API will fail if you have a HTTP -> HTTPS redirect enabled, either in TrueNAS itself or in some other system (e.g., Traefik) in front of TrueNAS.  This results from an [issue](https://github.com/truenas/api_client/issues/13) in the upstream API client.  If your NAS has a trusted and valid certificate, or you've set `verify_ssl = false` in `deploy_config`, you may be able to avoid this issue by setting `protocol = wss` in `deploy_config`.
 
 # Status
 * TrueNAS 25.04-BETA1 - Works locally (running on the TrueNAS host) and remotely (so long as all dependencies are installed), but see notes below.
@@ -17,12 +17,13 @@ Connections to the Websocket API will fail if you have a HTTP -> HTTPS redirect 
 * TrueNAS SCALE 23.10 - Same as 24.04.
 
 ## Notes for 25.04
-Security measures in TrueNAS SCALE 25.04 require that the API keys be passed over a secure channel.  In order to use this script with 25.04:
+Security measures in TrueNAS SCALE 25.04 require that the API keys be passed over a secure channel.  In order to use this script with 25.04, you must set `protocol = wss` in `deploy_config`.  And then, either:
 * You must have already deployed a trusted cert to your NAS
 * That cert must not be expired
 * You must have configured the UI to use that cert
 * The address you're using to connect to the NAS (`connect_host` in `deploy_config`) must be named in that cert
-* You must set `protocol = wss` in `deploy_config`.
+
+Or set `verify_ssl = false` in `deploy_config`.  This will disable validation of the TLS certificate, and should not be used on a routine basis.
 
 # Installation
 This script can run on any machine running Python 3 that has network access to your TrueNAS server, but in most cases it's best to run it directly on the TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.  If you're installing this on your TrueNAS server, it cannot be in your home directory; place it in a convenient place on a storage pool instead.

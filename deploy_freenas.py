@@ -53,7 +53,7 @@ logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 API_KEY = deploy.get('api_key')
 PROTOCOL = deploy.get('protocol', "ws")
 CONNECT_HOST = deploy.get('connect_host',"localhost")
-CONNECT_URI = PROTOCOL + "://" + CONNECT_HOST + "/websocket"
+VERIFY_SSL = deploy.getboolean('verify_ssl', fallback=True)
 
 PRIVATEKEY_PATH = deploy.get('privkey_path')
 if os.path.isfile(PRIVATEKEY_PATH)==False:
@@ -109,7 +109,10 @@ else:
     logger.critical("❌ Certificate and private key do not match.")
     exit(1)
 
-with Client(CONNECT_URI) as c:
+with Client(
+    uri=f"{PROTOCOL}://{CONNECT_HOST}/websocket",
+    verify_ssl=VERIFY_SSL
+) as c:
     result=c.call("auth.login_with_api_key", API_KEY)
     if result==False:
         logger.critical("Failed to authenticate!")
@@ -126,6 +129,8 @@ with Client(CONNECT_URI) as c:
         result = c.call("system.general.update", args)
         logger.debug(result)
         logger.info("UI cert updated to " + cert_name)
+    else:
+        logger.info("Not setting UI cert because ui_certificate_enabled is false.")
   
     if FTP_ENABLED==True:
         # Update the FTP service to use the new cert
@@ -133,6 +138,8 @@ with Client(CONNECT_URI) as c:
         result = c.call("ftp.update", args)
         logger.debug(result)
         logger.info("FTP cert updated to " + cert_name)
+    else:
+        logger.info("Not setting FTP cert because ftp_enabled is false.")
     
     if APPS_ENABLED==True:
         # Update apps.  Any app whose configuration includes "ix_certificates" where
@@ -150,6 +157,8 @@ with Client(CONNECT_URI) as c:
                 logger.info("App "+ app["id"] + " updated to " + cert_name)
             else:
                 logger.info("App " + app["id"] + " not updated.")
+    else:
+        logger.info("Not setting app certificates because apps_enabled is false.")
             
     if DELETE_OLD_CERTS==True:
         # Delete old certs.  Any existing certs whose name start with CERT_BASE_NAME
@@ -160,8 +169,12 @@ with Client(CONNECT_URI) as c:
         for cert in certs:
             name = cert['name']
             if name.startswith(CERT_BASE_NAME) and cert['id'] != cert_id:
-                print("Deleting cert "+ name)
+                logger.info("Deleting cert "+ name)
                 c.call("certificate.delete", cert['id'], job=True)
+            else:
+                logger.info("Not deleting cert " + name)
+    else:
+        logger.info("Not deleting old certs because delete_old_certs is false.")
 
     # Restart the UI
     c.call("system.general.ui_restart")
