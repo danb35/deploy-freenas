@@ -18,11 +18,8 @@ Source: https://github.com/danb35/deploy-freenas
 
 import argparse
 import os
-import sys
-import json
 import time
 import configparser
-import socket
 import logging
 from datetime import datetime, timedelta
 from truenas_api_client import Client
@@ -56,13 +53,7 @@ CONNECT_HOST = deploy.get('connect_host',"localhost")
 VERIFY_SSL = deploy.getboolean('verify_ssl', fallback=True)
 
 PRIVATEKEY_PATH = deploy.get('privkey_path')
-if os.path.isfile(PRIVATEKEY_PATH)==False:
-    print("Private key file must exist!")
-    exit(1)
 FULLCHAIN_PATH = deploy.get('fullchain_path')
-if os.path.isfile(FULLCHAIN_PATH)==False:
-    print("Full chain file must exist!")
-    exit(1)
 UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled',fallback=True)
 FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
 APPS_ENABLED = deploy.getboolean('apps_enabled', fallback=False)
@@ -72,6 +63,14 @@ CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
 now = datetime.now()
 cert_name = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
+
+def validate_file(path, description):
+    if not os.path.isfile(path):
+        logger.critical(f"{description} file must exist!")
+        exit(1)
+
+validate_file(PRIVATEKEY_PATH, "Private key")
+validate_file(FULLCHAIN_PATH, "Full chain")
 
 # Load cert/key
 with open(PRIVATEKEY_PATH, 'r') as file:
@@ -100,7 +99,7 @@ def validate_cert_key_pair(cert_pem, key_pem):
         return cert_obj.get_pubkey().to_cryptography_key().public_numbers() == \
                key_obj.to_cryptography_key().public_key().public_numbers()
     except Exception as e:
-        print(f"Validation error: {e}")
+        logger.error(f"Validation error: {e}")
         return False
 
 if validate_cert_key_pair(full_chain, priv_key):
@@ -178,3 +177,6 @@ with Client(
 
     # Restart the UI
     c.call("system.general.ui_restart")
+    logger.info("Restarting web UI.")
+
+logger.info("deploy_freenas finished.")
