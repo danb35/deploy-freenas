@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Import and activate a SSL/TLS certificate into TrueNAS SCALE 24.10 or later
+Import and activate a SSL/TLS certificate into TrueNAS SCALE
 Uses the TrueNAS API to make the change, so everything's properly saved in the config
 database and captured in a backup.
 
@@ -21,10 +21,11 @@ import os
 import time
 import configparser
 import logging
+import re
+import sys
 from datetime import datetime, timedelta
 from truenas_api_client import Client
 from OpenSSL import crypto
-import re
 
 parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into TrueNAS.')
 parser.add_argument('-c', '--config', default=(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -37,7 +38,7 @@ if os.path.isfile(args.config):
     deploy = config['deploy']
 else:
     print("Config file", args.config, "does not exist!")
-    exit(1)
+    sys.exit(1)
 
 LOG = deploy.get('log_level',"INFO")
 logging.basicConfig (format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -47,28 +48,35 @@ logging.basicConfig (format='%(asctime)s - %(name)s - %(levelname)s - %(message)
 logger = logging.getLogger()
 logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 
+# Initialize variables
 API_KEY = deploy.get('api_key')
 PROTOCOL = deploy.get('protocol', "ws")
-CONNECT_HOST = deploy.get('connect_host',"localhost")
+CONNECT_HOST = deploy.get('connect_host', "localhost")
 VERIFY_SSL = deploy.getboolean('verify_ssl', fallback=True)
-
 PRIVATEKEY_PATH = deploy.get('privkey_path')
 FULLCHAIN_PATH = deploy.get('fullchain_path')
-UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled',fallback=True)
-FTP_ENABLED = deploy.getboolean('ftp_enabled',fallback=False)
+UI_CERTIFICATE_ENABLED = deploy.getboolean('ui_certificate_enabled', fallback=True)
+FTP_ENABLED = deploy.getboolean('ftp_enabled', fallback=False)
 APPS_ENABLED = deploy.getboolean('apps_enabled', fallback=False)
 APPS_ONLY_MATCHING_SAN = deploy.getboolean('apps_only_matching_san', fallback=False)
 DELETE_OLD_CERTS = deploy.getboolean('delete_old_certs', fallback=False)
-CERT_BASE_NAME = deploy.get('cert_base_name','letsencrypt')
+CERT_BASE_NAME = deploy.get('cert_base_name', 'letsencrypt')
 now = datetime.now()
 cert_name = CERT_BASE_NAME + "-%s-%s-%s-%s" %(now.year, now.strftime('%m'), now.strftime('%d'), ''.join(c for c in now.strftime('%X') if
 c.isdigit()))
 
+# Validate that API_KEY is set and contains at least 66 characters.  Keys may be
+# longer if at least 10 keys have been issued by the target system.
+if len(API_KEY) < 66:
+    logger.critical("Invalid or empty API key")
+    sys.exit(1)
+
 def validate_file(path, description):
     if not os.path.isfile(path):
         logger.critical(f"{description} file must exist!")
-        exit(1)
+        sys.exit(1)
 
+# Make sure fullchain and key files exist
 validate_file(PRIVATEKEY_PATH, "Private key")
 validate_file(FULLCHAIN_PATH, "Full chain")
 
@@ -106,7 +114,7 @@ if validate_cert_key_pair(full_chain, priv_key):
     logger.info("✅ Certificate and private key match.")
 else:
     logger.critical("❌ Certificate and private key do not match.")
-    exit(1)
+    sys.exit(1)
 
 with Client(
     uri=f"{PROTOCOL}://{CONNECT_HOST}/websocket",
@@ -118,25 +126,35 @@ with Client(
         exit(1)
     # Import the certificate
     args = {"name": cert_name, "certificate": full_chain, "privatekey": priv_key, "create_type": "CERTIFICATE_CREATE_IMPORTED"}
-    cert = c.call("certificate.create", args, job=True)
-    logger.debug(cert)
-    logger.info("Certificate " + cert_name + " imported.\n")
+    try:
+        cert = c.call("certificate.create", args, job=True)
+        logger.debug(cert)
+        logger.info("Certificate " + cert_name + " imported.\n")
+    except Exception as e:
+        logger.critical(f"Certificate import failed: {e}")
+        sys.exit(1)
     cert_id = cert["id"]
     if UI_CERTIFICATE_ENABLED==True:
         # Update the UI to use the new cert
         args = {"ui_certificate": cert_id}
-        result = c.call("system.general.update", args)
-        logger.debug(result)
-        logger.info("UI cert updated to " + cert_name)
+        try:
+            result = c.call("system.general.update", args)
+            logger.debug(result)
+            logger.info("UI certificate updated to " + cert_name)
+        except Exception as e:
+            logger.error(f"Failed to update UI certificate: {e}")
     else:
         logger.info("Not setting UI cert because ui_certificate_enabled is false.")
   
     if FTP_ENABLED==True:
         # Update the FTP service to use the new cert
         args = {"ssltls_certificate": cert_id}
-        result = c.call("ftp.update", args)
-        logger.debug(result)
-        logger.info("FTP cert updated to " + cert_name)
+        try:
+            result = c.call("ftp.update", args)
+            logger.debug(result)
+            logger.info("FTP cert updated to " + cert_name)
+        except Exception as e:
+            logger.error(f"Failed to update FTP certificate: {e}")
     else:
         logger.info("Not setting FTP cert because ftp_enabled is false.")
     
@@ -151,9 +169,12 @@ with Client(
             app_config = c.call("app.config", (app["id"]))
             logger.debug(app_config)
             if 'ix_certificates' in app_config and app_config['ix_certificates']:
-                result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
-                logger.debug(result)
-                logger.info("App "+ app["id"] + " updated to " + cert_name)
+                try:
+                    result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
+                    logger.debug(result)
+                    logger.info("App "+ app["id"] + " updated to " + cert_name)
+                except Exception as e:
+                    logger.error(f"Failed to update {app['id']}: {e}")
             else:
                 logger.info("App " + app["id"] + " not updated.")
     else:
@@ -169,7 +190,10 @@ with Client(
             name = cert['name']
             if name.startswith(CERT_BASE_NAME) and cert['id'] != cert_id:
                 logger.info("Deleting cert "+ name)
-                c.call("certificate.delete", cert['id'], job=True)
+                try:
+                    c.call("certificate.delete", cert['id'], job=True)
+                except Exception as e:
+                    logger.error(f"Deleting cert {cert['id']} failed: {e}")
             else:
                 logger.info("Not deleting cert " + name)
     else:

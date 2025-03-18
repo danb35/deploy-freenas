@@ -11,7 +11,7 @@ This version of this script is a work in progress, and has had minimal testing.
 Connections to the Websocket API will fail if you have a HTTP -> HTTPS redirect enabled, either in TrueNAS itself or in some other system (e.g., Traefik) in front of TrueNAS.  This results from an [issue](https://github.com/truenas/api_client/issues/13) in the upstream API client.  If your NAS has a trusted and valid certificate, or you've set `verify_ssl = false` in `deploy_config`, you may be able to avoid this issue by setting `protocol = wss` in `deploy_config`.
 
 # Status
-* TrueNAS 25.04-BETA1 - Works locally (running on the TrueNAS host) and remotely (so long as all dependencies are installed), but see notes below.
+* TrueNAS 25.04-RC1 - Works locally (running on the TrueNAS host) and remotely (so long as all dependencies are installed), but see notes below.
 * TrueNAS SCALE 24.10 - Works locally and remotely.
 * TrueNAS SCALE 24.04 - Works remotely only--the TrueNAS API client isn't installed in this version of TrueNAS.  Will not update certificates for apps on this or earlier versions of TrueNAS SCALE.
 * TrueNAS SCALE 23.10 - Same as 24.04.
