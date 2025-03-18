@@ -81,11 +81,18 @@ validate_file(PRIVATEKEY_PATH, "Private key")
 validate_file(FULLCHAIN_PATH, "Full chain")
 
 # Load cert/key
-with open(PRIVATEKEY_PATH, 'r') as file:
-    priv_key = file.read()
-with open(FULLCHAIN_PATH, 'r') as file:
-    full_chain = file.read()
+def read_file(path, description):
+    try:
+        with open(path, 'r') as file:
+            return file.read()
+    except Exception as e:
+        logger.critical(f"Error reading {description}: {e}")
+        sys.exit(1)
 
+priv_key = read_file(PRIVATEKEY_PATH, "Private key")
+full_chain = read_file(FULLCHAIN_PATH, "Full chain")
+
+# Validate that leaf cert matches private key
 def extract_leaf_certificate(fullchain_pem):
     """Extract the first certificate (leaf) from a full chain PEM file."""
     certs = re.findall(r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----", 
@@ -129,7 +136,7 @@ with Client(
     try:
         cert = c.call("certificate.create", args, job=True)
         logger.debug(cert)
-        logger.info("Certificate " + cert_name + " imported.\n")
+        logger.info(f"Certificate {cert_name} imported.")
     except Exception as e:
         logger.critical(f"Certificate import failed: {e}")
         sys.exit(1)
@@ -140,7 +147,7 @@ with Client(
         try:
             result = c.call("system.general.update", args)
             logger.debug(result)
-            logger.info("UI certificate updated to " + cert_name)
+            logger.info(f"UI certificate updated to {cert_name}")
         except Exception as e:
             logger.error(f"Failed to update UI certificate: {e}")
     else:
@@ -152,7 +159,7 @@ with Client(
         try:
             result = c.call("ftp.update", args)
             logger.debug(result)
-            logger.info("FTP cert updated to " + cert_name)
+            logger.info(f"FTP cert updated to {cert_name}")
         except Exception as e:
             logger.error(f"Failed to update FTP certificate: {e}")
     else:
@@ -172,11 +179,11 @@ with Client(
                 try:
                     result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
                     logger.debug(result)
-                    logger.info("App "+ app["id"] + " updated to " + cert_name)
+                    logger.info(f"App {app["id"]} updated to {cert_name}")
                 except Exception as e:
                     logger.error(f"Failed to update {app['id']}: {e}")
             else:
-                logger.info("App " + app["id"] + " not updated.")
+                logger.info(f"App {app["id"]} not updated.")
     else:
         logger.info("Not setting app certificates because apps_enabled is false.")
             
@@ -189,13 +196,13 @@ with Client(
         for cert in certs:
             name = cert['name']
             if name.startswith(CERT_BASE_NAME) and cert['id'] != cert_id:
-                logger.info("Deleting cert "+ name)
+                logger.info(f"Deleting cert {name}")
                 try:
                     c.call("certificate.delete", cert['id'], job=True)
                 except Exception as e:
-                    logger.error(f"Deleting cert {cert['id']} failed: {e}")
+                    logger.error(f"Deleting cert {name} failed: {e}")
             else:
-                logger.info("Not deleting cert " + name)
+                logger.info(f"Not deleting cert {name}")
     else:
         logger.info("Not deleting old certs because delete_old_certs is false.")
 
