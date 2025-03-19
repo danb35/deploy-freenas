@@ -28,7 +28,7 @@ Or set `verify_ssl = false` in `deploy_config`.  This will disable validation of
 # Installation
 This script can run on any machine running Python 3 that has network access to your TrueNAS server, but in most cases it's best to run it directly on the TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.  If you're installing this on your TrueNAS server, it cannot be in your home directory; place it in a convenient place on a storage pool instead.
 
-If you're not running this script on your TrueNAS server itself, you'll need to install the TrueNAS API client; you can do this by running `pip install git+https://github.com/truenas/api_client.git`.
+If you're not running this script on your TrueNAS server itself, you'll need to install the [TrueNAS API client](https://github.com/truenas/api_client); you can do this by running `pip install git+https://github.com/truenas/api_client.git`.  For more information, including alternative installation instructions, consult the preceding link.
 
 # Usage
 
