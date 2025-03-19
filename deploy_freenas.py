@@ -130,7 +130,7 @@ with Client(
     result=c.call("auth.login_with_api_key", API_KEY)
     if result==False:
         logger.critical("Failed to authenticate!")
-        exit(1)
+        sys.exit(1)
     # Import the certificate
     args = {"name": cert_name, "certificate": full_chain, "privatekey": priv_key, "create_type": "CERTIFICATE_CREATE_IMPORTED"}
     try:
