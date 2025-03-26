@@ -179,11 +179,11 @@ with Client(
                 try:
                     result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
                     logger.debug(result)
-                    logger.info(f"App {app["id"]} updated to {cert_name}")
+                    logger.info(f"App {app['id']} updated to {cert_name}")
                 except Exception as e:
                     logger.error(f"Failed to update {app['id']}: {e}")
             else:
-                logger.info(f"App {app["id"]} not updated.")
+                logger.info(f"App {app['id']} not updated.")
     else:
         logger.info("Not setting app certificates because apps_enabled is false.")
             
