@@ -33,7 +33,7 @@ As noted above, this script doesn't need to run on your NAS; it can run on any s
 
 You'll next need to install the [TrueNAS API client](https://github.com/truenas/api_client).  To do this, change to a convenient directory and run `git clone https://github.com/truenas/api_client`.  Change into the `api_client` directory and run `python3 setup.py install`.
 
-Then close this repository as described above.  Your system should be prepared to run the script.
+Then clone this repository as described above.  Your system should be prepared to run the script.
 
 # Usage
 
