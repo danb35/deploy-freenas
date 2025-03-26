@@ -28,7 +28,12 @@ Or set `verify_ssl = false` in `deploy_config`.  This will disable validation of
 # Installation
 This script can run on any machine running Python 3 that has network access to your TrueNAS server, but in most cases it's best to run it directly on the TrueNAS box.  Change to a convenient directory and run `git clone https://github.com/danb35/deploy-freenas`.  If you're installing this on your TrueNAS server, it cannot be in your home directory; place it in a convenient place on a storage pool instead.
 
-If you're not running this script on your TrueNAS server itself, you'll need to install the [TrueNAS API client](https://github.com/truenas/api_client); you can do this by running `pip install git+https://github.com/truenas/api_client.git`.  For more information, including alternative installation instructions, consult the preceding link.
+## Running the script somewhere else
+As noted above, this script doesn't need to run on your NAS; it can run on any system running Python 3 that can reach your NAS over the network, but it does have a couple of dependencies.  Assuming a bare-bones Debian 12 system, start with `apt install curl wget nano git python3 python3-setuptools python3-openssl`.
+
+You'll next need to install the [TrueNAS API client](https://github.com/truenas/api_client).  To do this, change to a convenient directory and run `git clone https://github.com/truenas/api_client`.  Change into the `api_client` directory and run `python3 setup.py install`.
+
+Then close this repository as described above.  Your system should be prepared to run the script.
 
 # Usage
 
