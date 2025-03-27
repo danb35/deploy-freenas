@@ -1,0 +1,50 @@
+# Configuration file for deploy_freenas.py
+
+[deploy]
+# API key for your TrueNAS installation, with necessary permissions
+api_key = YourNewlyGeneratedAPIKey#@#$*
+
+# privkey_path is the path to the certificate private key on your system.
+# privkey_path = /some/other/path
+
+# fullchain_path is the path to the full chain (leaf cert + intermediate certs)
+# on your system.
+# fullchain_path = /some/other/other/path
+
+# Everything below here is optional
+
+# connect_host specifies the hostname the script should attempt to connect to, to deploy the cert.
+# Default is localhost (assuming the script is running on your FreeNAS box)
+# connect_host = baz.bar.foo
+
+# protocol specifies the protocol used to connect to the API.  Default is ws.
+# Set to wss for TrueNAS 25.04 and later
+# protocol = wss
+
+# set ui_certificate_enabled to false if you want to skip using the new cerificate for the UI. Default is true.
+# ui_certificate_enabled = false
+
+# set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
+# ftp_enabled = true
+
+# set apps_enabled to true if you want to update your TrueNAS SCALE chart applications to use the new certificate. Default is false.
+# If this is enabled, any catalog app that's already set to use a certificate will be updated to use the new one.  Custom apps,
+# or apps without a certificate configured, will not be adjusted.
+# apps_enabled = true
+
+# Certificates will be given a name with a timestamp, by default it will be
+# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
+# cert_base_name = something_else
+
+# Set delete_old_certs to true to delete certs from the NAS whose name begins with cert_base_name
+# other than the cert just imported by the script.  Default is false.
+# delete_old_certs = true
+
+# log_level defines how verbose the script will be.  Valid values are debug, info,
+# warning, error, and critical.  Default is info.
+# log_level = debug
+
+# If verify_ssl is false and protocol is set to wss, connections to the API will not validate the certificate.
+# This means that connections will be permitted using expired and/or untrusted certificates.
+# Default is true.
+# verify_ssl = false
