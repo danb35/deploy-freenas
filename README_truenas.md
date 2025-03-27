@@ -1,8 +1,8 @@
 # deploy-freenas
 
-deploy-freenas.py is a Python script to deploy TLS certificates to a TrueNAS SCALE server using the TrueNAS Websocket API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  Its original intent was to be called from an ACME client like [acme.sh](https://github.com/acmesh-official/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.  However, it can be used with certificates from any source, whether a different ACME-based certificate authority or otherwise.
+deploy_truenas.py is a Python script to deploy TLS certificates to a TrueNAS SCALE/Community Edition server using the TrueNAS Websocket API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  Its original intent was to be called from an ACME client like [acme.sh](https://github.com/acmesh-official/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.  However, it can be used with certificates from any source, whether a different ACME-based certificate authority or otherwise.
 
-Since this script was developed, acme.sh has added a [deployment script](https://github.com/acmesh-official/acme.sh/wiki/deployhooks#25-deploy-the-cert-on-truenas-core-server) which can deploy newly-issued certs to your TrueNAS system, so you may not need this script.  However, it isn't clear whether the acme.sh deployment script handles the services covered by this script (S3, FTP, WebDAV, Apps for SCALE).
+Since this script was developed, acme.sh has added a [deployment script](https://github.com/acmesh-official/acme.sh/wiki/deployhooks#25-deploy-the-cert-on-truenas-core-server) which can deploy newly-issued certs to your TrueNAS system, so you may not need this script.  However, it isn't clear whether the acme.sh deployment script handles the services covered by this script (S3, FTP, WebDAV, Apps for SCALE).  `acme.sh` also has a separate deployment script for the websocket API, but again, its capabilities compared to this one are unknown.
 
 # WORK IN PROGRESS
 This version of this script is a work in progress, and has had minimal testing.
@@ -37,7 +37,7 @@ Then clone this repository as described above.  Your system should be prepared t
 
 # Usage
 
-The relevant configuration takes place in the `deploy_config` file.  You can create this file either by copying `deploy_config.example` from this repository, or directly using your preferred text editor.  Its format is as follows:
+The relevant configuration takes place in the `deploy_config` file.  You can create this file either by copying `deploy_config_truenas.example` from this repository, or directly using your preferred text editor.  Its format is as follows:
 
 ```
 [deploy]
@@ -60,10 +60,10 @@ An API key is required for authentication.  [Generate a new API token in the UI]
 api_key = 1-DXcZ19sZoZFdGATIidJ8vMP6dxk3nHWz3XX876oxS7FospAGMQjkOft0h4itJDSP
 ```
 
-Once you've prepared `deploy_config`, you can run `deploy_freenas.py`.  The intended use is that it would be called by your ACME client after issuing a certificate.  With acme.sh, for example, you'd add `--reloadcmd "/path/to/deploy_freenas.py"` to your command.
+Once you've prepared `deploy_config`, you can run `deploy_truenas.py`.  The intended use is that it would be called by your ACME client after issuing a certificate.  With acme.sh, for example, you'd add `--reloadcmd "/path/to/deploy_truenas.py"` to your command.
 
 There is an optional paramter, `-c` or `--config`, that lets you specify the path to your configuration file. By default the script will try to use `deploy_config` in the script working directoy:
 
 ```
-/path/to/deploy_freenas.py --config /somewhere/else/deploy_config
+/path/to/deploy_truenas.py --config /somewhere/else/deploy_config
 ```

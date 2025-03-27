@@ -1,0 +1,63 @@
+# Configuration file for deploy_freenas.py
+
+[deploy]
+# Choose one of the following authentication methods, "api_key" or "password" (comment out the other one).
+# Auth via API keys is highly recommended, but is only available from TrueNAS (Core) 12.0 up.
+# You can generate a new API key in the web interface under "Settings" (upper right) > "API Keys".
+# api_key = YourNewlyGeneratedAPIKey#@#$*
+# If you are on FreeNAS 11 or lower, set this to your FreeNAS root password
+password = YourSuperSecurePassword#@#$*
+
+# Everything below here is optional
+
+# cert_fqdn specifies the FQDN used for your certificate.  Default is your system hostname
+# cert_fqdn = foo.bar.baz
+
+# connect_host specifies the hostname the script should attempt to connect to, to deploy the cert.
+# Default is localhost (assuming the script is running on your FreeNAS box)
+# connect_host = baz.bar.foo
+
+# verify sets whether the script will attempt to verify the server's certificate with a HTTPS
+# connection.  Set to true if you're using a HTTPS connection to a remote host.  If connect_host
+# is set to localhost (or is unset), set to false.  Default is false.
+# verify = false
+
+# privkey_path is the path to the certificate private key on your system.  Default
+# assumes you're using acme.sh:
+# /root/.acme.sh/cert_fqdn/cert_fqdn.key or /root/.acme.sh/cert_fqdn_ecc/cert_fqdn.key
+# privkey_path = /some/other/path
+
+# fullchain_path is the path to the full chain (leaf cert + intermediate certs)
+# on your system.  Default assumes you're using acme.sh:
+# /root/.acme.sh/cert_fqdn/fullchain.cer or /root/.acme.sh/cert_fqdn_ecc/fullchain.cer
+# fullchain_path = /some/other/other/path
+
+# protocol sets the connection protocol, http or https.  Include '://' at the end.
+# Default is http
+# protocol = https://
+
+# port sets the port to use to connect.  Default is 80.  If protocol is https,
+# this MUST be set to your https port.
+# port = 443
+
+# set ui_certificate_enabled to false if you want to skip using the new cerificate for the UI. Default is true.
+# ui_certificate_enabled = false
+
+# set s3_enabled to true if you have the S3 service enabled on your FreeNAS. Default is false.
+# s3_enabled = true
+
+# set ftp_enabled to true if you have the FTP service enabled on your FreeNAS. Default is false.
+# ftp_enabled = true
+
+# set webdav_enabled to true if you have the WEBDAV service enabled on your FreeNAS. Default is false.
+# webdav_enabled = true
+
+# set apps_enabled to true if you want to update your TrueNAS SCALE chart applications to use the new certificate. Default is false.
+# apps_enabled = true
+
+# only update TrueNAS SCALE chart applications where the san of the current and the new cert matches. Default is false.
+#apps_only_matching_san = true
+
+# Certificates will be given a name with a timestamp, by default it will be
+# letsencrypt-yyyy-mm-dd-hhmmss.  You can change the first part if you like.
+# cert_base_name = something_else
