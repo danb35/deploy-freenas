@@ -171,7 +171,7 @@ with Client(
         # uploaded.  This should mean any catalog apps for which a certificate has been
         # configured.
         apps = c.call("app.query")
-        logger.debug(APPS_ONLY_MATCHING_SAN)
+        logger.debug(apps)
         for app in apps:
             app_config = c.call("app.config", (app["id"]))
             logger.debug(app_config)
