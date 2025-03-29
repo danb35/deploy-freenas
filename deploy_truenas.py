@@ -50,7 +50,7 @@ logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 
 # Initialize variables
 API_KEY = deploy.get('api_key')
-PROTOCOL = deploy.get('protocol', "ws")
+PROTOCOL = deploy.get('protocol', "wss")
 CONNECT_HOST = deploy.get('connect_host', "localhost")
 VERIFY_SSL = deploy.getboolean('verify_ssl', fallback=True)
 PRIVATEKEY_PATH = deploy.get('privkey_path')
