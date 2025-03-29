@@ -210,4 +210,4 @@ with Client(
     c.call("system.general.ui_restart")
     logger.info("Restarting web UI.")
 
-logger.info("deploy_freenas finished.")
+logger.info("deploy_truenas finished.")
