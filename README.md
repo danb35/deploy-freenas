@@ -5,3 +5,5 @@ This repository contains scripts to automate deployment of a TLS certificate to 
 * If you're using TrueNAS SCALE or Community Edition (as of 25.04), use `deploy_truenas.py`. [README](README_truenas.md)
 * I've had no reports of compatibility, pro or con, with any version of TrueNAS Enterprise.  I expect the `_freenas` version will work with FreeBSD-based TrueNAS Enterprise installations, while the `_truenas` version will work with Linux-based installations, but I'm afraid you're largely on your own.
 
+## Support
+If you have questions about these scripts, or issues with them, let me know in [this topic](https://forums.truenas.com/t/lets-encrypt-with-freenas-11-1-and-later/425/) on the TrueNAS forums.
