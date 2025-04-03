@@ -55,7 +55,7 @@ protocol = ws
 
 Everything but `api_key` and paths to the cert and key are optional, and the defaults are documented in `deploy_config.example`.
 
-An API key is required for authentication.  [Generate a new API token in the UI](https://www.truenas.com/docs/hub/additional-topics/api/#creating-api-keys) first, then add it as `api_key` to the config:
+An API key is required for authentication.  [Generate a new API token in the UI](https://www.truenas.com/docs/scale/24.10/scaleuireference/toptoolbar/settings/apikeysscreen/) first, then add it as `api_key` to the config:
 ```
 api_key = 1-DXcZ19sZoZFdGATIidJ8vMP6dxk3nHWz3XX876oxS7FospAGMQjkOft0h4itJDSP
 ```
