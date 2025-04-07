@@ -60,6 +60,24 @@ An API key is required for authentication.  [Generate a new API token in the UI]
 api_key = 1-DXcZ19sZoZFdGATIidJ8vMP6dxk3nHWz3XX876oxS7FospAGMQjkOft0h4itJDSP
 ```
 
+You can optionally configure more than one TrueNAS host in `deploy_config`.  To do so, add a second (or subsequent) header with a label for that host.  The file would look something like this:
+
+```
+[nas01]
+api_key = YourReallySecureAPIKey
+privkey_path = /some/other/path
+fullchain_path = /some/other/other/path
+connect_host = nas01.baz.bar.foo
+
+[nas02]
+api_key = YourReallySecureAPIKey
+privkey_path = /some/other/path
+fullchain_path = /some/other/other/path
+connect_host = nas02.baz.bar.foo
+```
+
+Then run the script, specifying the label name, e.g., `deploy_truenas.py nas02`.  If the label name is not specified, it defaults to `deploy` as had been required with previous versions of this script.
+
 Once you've prepared `deploy_config`, you can run `deploy_truenas.py`.  The intended use is that it would be called by your ACME client after issuing a certificate.  With acme.sh, for example, you'd add `--reloadcmd "/path/to/deploy_truenas.py"` to your command.
 
 There is an optional paramter, `-c` or `--config`, that lets you specify the path to your configuration file. By default the script will try to use `deploy_config` in the script working directoy:

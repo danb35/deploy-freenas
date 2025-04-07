@@ -27,15 +27,23 @@ from datetime import datetime, timedelta
 from truenas_api_client import Client
 from OpenSSL import crypto
 
-parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into TrueNAS.')
+parser = argparse.ArgumentParser(description='Import and activate a SSL/TLS certificate into TrueNAS.',exit_on_error=False)
 parser.add_argument('-c', '--config', default=(os.path.join(os.path.dirname(os.path.realpath(__file__)),
     'deploy_config')), help='Path to config file, defaults to deploy_config.')
-args = parser.parse_args()
+parser.add_argument('label', help='Use the specified config section, default is "deploy"', nargs='?', default='deploy')
+try:
+  args = parser.parse_args()
+except argparse.ArgumentError:
+  parser.print_usage()
 
 if os.path.isfile(args.config):
     config = configparser.ConfigParser()
     config.read(args.config)
-    deploy = config['deploy']
+    try:
+      deploy = config[args.label]
+    except KeyError:
+      print("\nlabel", args.label, "not found in the config file\n")
+      sys.exit(1)
 else:
     print("Config file", args.config, "does not exist!")
     sys.exit(1)
