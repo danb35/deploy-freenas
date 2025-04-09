@@ -163,6 +163,10 @@ else:
     API_PATH="/api/current"
     logger.debug(f"API path is {API_PATH}")
 
+# 
+# Connect to API
+# 
+
 with Client(
     uri=f"{PROTOCOL}://{CONNECT_HOST}{API_PATH}",
     verify_ssl=VERIFY_SSL
