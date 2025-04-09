@@ -23,6 +23,7 @@ import configparser
 import logging
 import re
 import sys
+import requests
 from datetime import datetime, timedelta
 from truenas_api_client import Client
 from OpenSSL import crypto
@@ -131,8 +132,39 @@ else:
     logger.critical("❌ Certificate and private key do not match.")
     sys.exit(1)
 
+# Determine API path
+# If valid JSON data is received from http://CONNECT_HOST/api/versions, the system is
+# at least TrueNAS 25.04, and thus the API endpoint is ws/wss://CONNECT_HOST/api/current.
+# Otherwise, it's presumed to be an earlier version and the endpoint is
+# ws/wss://CONNECT_HOST/websocket
+valid_versions = []
+invalid_response = False
+
+try:
+    response = requests.get(f"http://{CONNECT_HOST}/api/versions", timeout=10)
+    response.raise_for_status()
+
+    data = response.json()
+    if isinstance(data, list) and all(isinstance(v, str) and v.startswith("v") for v in data):
+        valid_versions = data
+        logger.debug(f"✅ Valid versions received: {valid_versions}")
+    else:
+        invalid_response = True
+        logger.debug(f"⚠️ Unexpected response structure: {data}")
+
+except Exception as e:
+    invalid_response = True
+    logger.debug(f"❌ Failed to retrieve or parse the response: {e}")
+
+if invalid_response==True:
+    API_PATH="/websocket"
+    logger.debug(f"API path is {API_PATH}")
+else:
+    API_PATH="/api/current"
+    logger.debug(f"API path is {API_PATH}")
+
 with Client(
-    uri=f"{PROTOCOL}://{CONNECT_HOST}/websocket",
+    uri=f"{PROTOCOL}://{CONNECT_HOST}{API_PATH}",
     verify_ssl=VERIFY_SSL
 ) as c:
     result=c.call("auth.login_with_api_key", API_KEY)
