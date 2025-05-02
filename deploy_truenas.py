@@ -58,6 +58,10 @@ logger = logging.getLogger()
 logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 
 # Initialize variables
+CONNECT_PORT = ""
+CONNECT_PORT = deploy.get('connect_port', "")
+if CONNECT_PORT != "":
+    CONNECT_PORT = ":" + CONNECT_PORT
 API_KEY = deploy.get('api_key')
 PROTOCOL = deploy.get('protocol', "ws")
 CONNECT_HOST = deploy.get('connect_host', "localhost")
@@ -168,7 +172,7 @@ else:
 # 
 
 with Client(
-    uri=f"{PROTOCOL}://{CONNECT_HOST}{API_PATH}",
+    uri=f"{PROTOCOL}://{CONNECT_HOST}{CONNECT_PORT}{API_PATH}",
     verify_ssl=VERIFY_SSL
 ) as c:
     result=c.call("auth.login_with_api_key", API_KEY)
