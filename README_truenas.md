@@ -6,7 +6,7 @@ deploy_truenas.py is a Python script to deploy TLS certificates to a TrueNAS SCA
 This script isn't the only way to automate deployment of a TLS certificate to your TrueNAS SCALE/CE system.  Known alternatives include:
 * [TrueNAS' own built-in mechanism](https://wiki.familybrown.org/en/fester/maintain-truenas/letsencrypt-scale).  It's far more complicated than necessary to set up, but if you use one of the supported DNS providers (Cloudflare, Digital Ocean, OVH, or Route53), and you don't need to deploy the same cert anywhere else, it's still probably the simplest way to go.
 * Although it doesn't currently (early May 2025) seem to be documented anywhere, `acme.sh` has a deploy hook that works with the websocket API.  The closest I've found to documentation is [this section](https://github.com/acmesh-official/acme.sh/wiki/deployhooks#25-deploy-the-cert-on-truenas-core-server) in its wiki.  Substitute `--deploy-hook truenas_ws` in the given command to use this hook.  Note that as of this writing, this script can only be run on the TrueNAS host to which you're deploying the cert; it doesn't have any option to connect to a different host.
-* [tnascert-deploy](https://github.com/jrushford/tnascert-deploy) implements many of the features of this script in Go, resulting in a statically-linked binary you can run pretty much anywhere with no other dependencies.  File size is much larger (roughly 8 MB for the binary vs. 10 KB for this script), but simplicity of installation may outweigh this, and the comparison is a little misleading, as it doesn't account for this script's dependencies.  Binaries are presently available for Linux/x64, FreeBSD/x64, and macOS/ARM, or you can build it yourself under any OS using Go.
+* [tnascert-deploy](https://github.com/jrushford/tnascert-deploy) implements many of the features of this script in Go, resulting in a statically-linked binary you can run pretty much anywhere with no other dependencies.  File size is much larger (roughly 8 MB for the binary vs. 10 KB for this script), but simplicity of installation may outweigh this, and the comparison is a little misleading, as it doesn't account for this script's dependencies.  Binaries are presently available for Linux/x64, FreeBSD/x64, macOS/ARM, and Windows, or you can build it yourself under any OS using Go.
 
 Support for any of these, of course, is with their respective sources.
 
@@ -14,13 +14,13 @@ Support for any of these, of course, is with their respective sources.
 Connections to the Websocket API will fail if you have a HTTP -> HTTPS redirect enabled, either in TrueNAS itself or in some other system (e.g., Traefik) in front of TrueNAS.  This results from an [issue](https://github.com/truenas/api_client/issues/13) in the upstream API client.  If your NAS has a trusted and valid certificate, or you've set `verify_ssl = false` in `deploy_config`, you may be able to avoid this issue by setting `protocol = wss` in `deploy_config`.
 
 # Status
-* TrueNAS 25.04-RC1 - Works locally (running on the TrueNAS host) and remotely (so long as all dependencies are installed), but see notes below.
+* TrueNAS CE 25.04 - Works locally (running on the TrueNAS host) and remotely (so long as all dependencies are installed), but see notes below.
 * TrueNAS SCALE 24.10 - Works locally and remotely.
 * TrueNAS SCALE 24.04 - Works remotely only--the TrueNAS API client isn't installed in this version of TrueNAS.  Will not update certificates for apps on this or earlier versions of TrueNAS SCALE.
 * TrueNAS SCALE 23.10 - Same as 24.04.
 
 ## Notes for 25.04
-Security measures in TrueNAS SCALE 25.04 require that the API keys be passed over a secure channel.  In order to use this script with 25.04, you must set `protocol = wss` in `deploy_config`.  And then, either:
+Security measures in TrueNAS Community Edition 25.04 require that the API keys be passed over a secure channel.  In order to use this script with 25.04, you must set `protocol = wss` in `deploy_config`.  And then, either:
 * You must have already deployed a trusted cert to your NAS
 * That cert must not be expired
 * You must have configured the UI to use that cert
