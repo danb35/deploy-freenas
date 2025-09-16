@@ -225,7 +225,16 @@ with Client(
             logger.debug(app_config)
             if 'ix_certificates' in app_config and app_config['ix_certificates']:
                 try:
-                    result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
+                    logger.info(f"Updating application {app['id']}.")
+                    port_number = None
+                    try:
+                        port_number = app_config["network"]["web_port"]["port_number"]
+                    except KeyError:
+                        pass
+                    values = {"network": {"certificate_id": cert_id}}
+                    if port_number:
+                        values["network"]["web_port"] = {"port_number": port_number}
+                    result=c.call("app.update", app["id"], {"values": values}, job=True)
                     logger.debug(result)
                     logger.info(f"App {app['id']} updated to {cert_name}")
                 except Exception as e:
