@@ -225,7 +225,6 @@ with Client(
             logger.debug(app_config)
             if 'ix_certificates' in app_config and app_config['ix_certificates']:
                 try:
-                    result=c.call("app.update", app["id"], {"values": {"network": {"certificate_id": cert_id}}}, job=True)
                     logger.info(f"Updating application {app['id']}.")
                     port_number = None
                     try:
