@@ -60,8 +60,11 @@ logger.setLevel(getattr(logging, LOG.upper(), logging.INFO))
 # Initialize variables
 CONNECT_PORT = ""
 CONNECT_PORT = deploy.get('connect_port', "")
+CONNECT_PORT_HTTP = deploy.get('connect_port_http', "")
 if CONNECT_PORT != "":
     CONNECT_PORT = ":" + CONNECT_PORT
+if CONNECT_PORT_HTTP != "":
+    CONNECT_PORT_HTTP = ":" + CONNECT_PORT_HTTP
 API_KEY = deploy.get('api_key')
 PROTOCOL = deploy.get('protocol', "ws")
 CONNECT_HOST = deploy.get('connect_host', "localhost")
@@ -145,7 +148,7 @@ valid_versions = []
 invalid_response = False
 
 try:
-    response = requests.get(f"http://{CONNECT_HOST}/api/versions", timeout=10)
+    response = requests.get(f"http://{CONNECT_HOST}{CONNECT_PORT_HTTP}/api/versions", timeout=10)
     response.raise_for_status()
 
     data = response.json()

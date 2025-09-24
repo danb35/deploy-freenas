@@ -21,6 +21,9 @@ api_key = YourNewlyGeneratedAPIKey#@#$*
 # 80 if protocol is ws, and 443 if protocol is wss.
 # connect_port = 81
 
+# connect_port_http specifies the HTTP port on which the script should fetch API version infomation.  Defaults to 80.
+# connect_port_http = 81
+
 # protocol specifies the protocol used to connect to the API.  Default is ws.
 # Set to wss for TrueNAS 25.04 and later
 # protocol = wss
