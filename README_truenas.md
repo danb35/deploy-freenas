@@ -1,4 +1,4 @@
-# deploy-freenas
+# deploy-truenas
 
 deploy_truenas.py is a Python script to deploy TLS certificates to a TrueNAS SCALE/Community Edition server using the TrueNAS Websocket API.  This should ensure that the certificate data is properly stored in the configuration database, and that all appropriate services use this certificate.  Its original intent was to be called from an ACME client like [acme.sh](https://github.com/acmesh-official/acme.sh) after the certificate is issued, so that the entire process of issuance (or renewal) and deployment can be automated.  However, it can be used with certificates from any source, whether a different ACME-based certificate authority or otherwise.
 
