@@ -24,6 +24,7 @@ import logging
 import re
 import sys
 import requests
+import copy
 from datetime import datetime, timedelta
 from truenas_api_client import Client
 from OpenSSL import crypto
@@ -229,14 +230,18 @@ with Client(
             if 'ix_certificates' in app_config and app_config['ix_certificates']:
                 try:
                     logger.info(f"Updating application {app['id']}.")
-                    port_number = None
-                    try:
-                        port_number = app_config["network"]["web_port"]["port_number"]
-                    except KeyError:
-                        pass
-                    values = {"network": {"certificate_id": cert_id}}
-                    if port_number:
-                        values["network"]["web_port"] = {"port_number": port_number}
+
+                    # Prevent existing config from being overwritten by just 
+                    # duplicating it
+                    existing_config = app_config["network"]
+                    logger.debug("Existing config: %r", existing_config)
+
+                    new_config = copy.deepcopy(existing_config)
+                    new_config["certificate_id"] = cert_id
+                    logger.debug("New config: %r", new_config)
+
+                    values = {"network": new_config}
+
                     job = c.call("app.update", app["id"], {"values": values}, job='RETURN')
                     # Ugly access to protected attributes. Is there a better way?
                     with job.client._jobs_lock:
